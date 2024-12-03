@@ -30,6 +30,7 @@ try {
         $result_role = mysqli_stmt_get_result($stmt_role);
         $role_data = mysqli_fetch_assoc($result_role);
         mysqli_stmt_close($stmt_role);
+        $_SESSION['role_name'] = $role_data['role_name'];
 
         if ($role_data['role_name'] === 'Administrador') {
             header('Location: ../admin/historial.php'); // Página de bienvenida del admin
