@@ -1,52 +1,61 @@
 <?php
 session_start();
-include_once '../conexion/conexion.php';
 
-$usuario = mysqli_real_escape_string($conexion, $_POST['usuario']);
-$password = mysqli_real_escape_string($conexion, $_POST['password']);
-$_SESSION['usuario'] = $usuario;
+// Verificar si el usuario está autenticado y es administrador
+if ($_SESSION['role_name'] !== 'Administrador') {
+    header('Location: ../index.php?error=2');
+    exit();
+}
 
-try {
-    // Consulta para obtener el nombre de usuario, contraseña y rol
-    $sql = "SELECT username, pwd, role_id 
-            FROM tbl_users 
-            WHERE username = ?";
-    $stmt = mysqli_prepare($conexion, $sql);
-    mysqli_stmt_bind_param($stmt, "s", $usuario);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $row = mysqli_fetch_assoc($result);
-    mysqli_stmt_close($stmt);
+include_once('../conexion/conexion.php');
 
-    // Si el usuario existe y la contraseña es correcta
-    if ($row && password_verify($password, $row['pwd'])) {
-        $_SESSION['username'] = $row['username'];
-
-        // Verificar el rol del usuario
-        $sql_role = "SELECT role_name FROM tbl_roles WHERE role_id = ?";
-        $stmt_role = mysqli_prepare($conexion, $sql_role);
-        mysqli_stmt_bind_param($stmt_role, "i", $row['role_id']);
-        mysqli_stmt_execute($stmt_role);
-        $result_role = mysqli_stmt_get_result($stmt_role);
-        $role_data = mysqli_fetch_assoc($result_role);
-        mysqli_stmt_close($stmt_role);
-
-        // Guardar el rol en la sesión
-        $_SESSION['role_name'] = $role_data['role_name'];
-
-        if ($role_data['role_name'] === 'Administrador') {
-            header('Location: ../admin/principalAdmin.php'); // Página de bienvenida del admin
-            exit();
-        } else {
-            header('Location: ../paginaPrincipal.php'); // Página principal para usuarios normales
-            exit();
-        }
-    } else {
-        // Redirigir al login con error si la autenticación falla
-        header('Location: ../index.php?error=1');
-        exit();
-    }
-} catch (Exception $e) {
-    echo "Error: " . $e->getMessage();
+if (!isset($conexion)) {
+    die("Error: La conexión a la base de datos no se estableció.");
 }
 ?>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selección de Salas</title>
+    <link rel="stylesheet" href="../styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sancreek&display=swap" rel="stylesheet">
+    <style>
+
+        .editar {
+        width: 100px; /* Ajusta según el tamaño deseado */
+        height: auto; /* Mantener la proporción */
+        }
+    </style>
+</head>
+<body>
+    <div><img src="../img/logo.webp" alt="Logo de la página" class="superpuesta"><br></div>
+    <div class="container">
+        <h1>A D M I N I S T R A C I Ó N </h1>
+        <div class="room-sections">
+            <!-- Panel de control -->
+            <div class="room-category">
+                <form action="./historial.php">
+                    <button><img src="../img/admin1.png" alt="Terrazas" onclick="mostrarEstadoTerrazas()"></button>
+                </form>
+            </div>
+
+            <!-- Gestion de edicion -->
+            <div class="room-category">
+            <form action="./historial.php">
+                    <button><img class="editar" src="../img/editar1.png" alt="Terrazas" onclick="mostrarEstadoTerrazas()"></button>
+                </form>
+            </div>
+        </div>
+        <button class="logout-button" onclick="logout1()">Cerrar Sesión</button>
+    </div>
+
+    <script src="./validaciones/funciones.js"></script>
+    <script src="./validaciones/funcionesPaginaPrincipal.js"></script>
+
+</body>
+</html>
+
