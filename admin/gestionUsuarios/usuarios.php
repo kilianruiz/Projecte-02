@@ -9,31 +9,35 @@ if (!isset($_SESSION['username']) || $_SESSION['role_name'] !== 'Administrador')
 
 include_once('../../conexion/conexion.php');
 
-if (!isset($conexion)) {
-    die("Error: La conexión a la base de datos no se estableció.");
+try {
+    // Variables para los filtros
+    $usernameFilter = $_GET['username'] ?? '';
+    $roleFilter = $_GET['role'] ?? '';
+
+    // Construir consulta con filtros
+    $sql = "
+        SELECT u.user_id, u.username, u.lastname, r.role_name 
+        FROM tbl_users u
+        JOIN tbl_roles r ON u.role_id = r.role_id
+        WHERE (u.username LIKE :username OR :username = '')
+        AND (r.role_name LIKE :role OR :role = '')
+    ";
+
+    // Preparar y ejecutar la consulta con parámetros de filtro
+    $stmt = $conexion->prepare($sql);
+    $likeUsername = "%$usernameFilter%";
+    $likeRole = "%$roleFilter%";
+    $stmt->bindParam(':username', $likeUsername, PDO::PARAM_STR);
+    $stmt->bindParam(':role', $likeRole, PDO::PARAM_STR);
+    $stmt->execute();
+
+    // Obtener el resultado
+    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (PDOException $e) {
+    die("Error al realizar la consulta: " . $e->getMessage());
 }
 
-// Variables para los filtros
-$usernameFilter = $_GET['username'] ?? '';
-$roleFilter = $_GET['role'] ?? '';
-
-// Construir consulta con filtros
-$sql = "
-    SELECT u.user_id, u.username, u.lastname, r.role_name 
-    FROM tbl_users u
-    JOIN tbl_roles r ON u.role_id = r.role_id
-    WHERE (u.username LIKE ? OR ? = '')
-    AND (r.role_name LIKE ? OR ? = '')
-";
-$stmt = $conexion->prepare($sql);
-$likeUsername = "%$usernameFilter%";
-$likeRole = "%$roleFilter%";
-$stmt->bind_param('ssss', $likeUsername, $usernameFilter, $likeRole, $roleFilter);
-$stmt->execute();
-$result = $stmt->get_result();
-
-// Cerrar la conexión a la base de datos
-$conexion->close();
 ?>
 
 <!DOCTYPE html>
@@ -145,7 +149,7 @@ $conexion->close();
 
     <!-- Tabla de Usuarios -->
     <?php
-    if ($result->num_rows > 0) {
+    if ($result) {
         echo "<table class='table table-striped table-bordered'>";
         echo "<thead>
                 <tr>
@@ -156,7 +160,7 @@ $conexion->close();
               </thead>";
         echo "<tbody>";
 
-        while ($row = $result->fetch_assoc()) {
+        foreach ($result as $row) {
             $username = $row['username'] ?? '';
             $role_name = $row['role_name'] ?? '';
 

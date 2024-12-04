@@ -13,16 +13,16 @@ if (!isset($conexion)) {
     die("Error: La conexión a la base de datos no se estableció.");
 }
 
-// Eliminar todas las ocupaciones de la tabla tbl_occupations
-$sql = "DELETE FROM tbl_occupations";
+try {
+    // Eliminar todas las ocupaciones de la tabla tbl_occupations
+    $sql = "DELETE FROM tbl_occupations";
+    $stmt = $conexion->prepare($sql);
+    $stmt->execute();
 
-if ($conexion->query($sql) === TRUE) {
     // Redirigir con mensaje de éxito
     header('Location: historial.php?mensaje=historial_eliminado');
-} else {
+} catch (PDOException $e) {
     // Redirigir con mensaje de error
     header('Location: historial.php?mensaje=error_al_eliminar');
 }
-
-$conexion->close();
 ?>

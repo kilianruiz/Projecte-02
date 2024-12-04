@@ -8,27 +8,35 @@ if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'Administrador'
 
 include_once('../../conexion/conexion.php');
 
-if (!isset($conexion)) {
-    die("Error: La conexión a la base de datos no se estableció.");
-}
+try {
+    if (isset($_POST['submit'])) {
+        // Sanitizar y obtener datos
+        $username = $_POST['username'];
+        $password = $_POST['password'];
+        $role = intval($_POST['role']);
 
-if (isset($_POST['submit'])) {
-    $username = mysqli_real_escape_string($conexion, $_POST['username']);
-    $password = mysqli_real_escape_string($conexion, $_POST['password']);
-    $role = intval($_POST['role']); 
+        // Encriptar la contraseña
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        // Preparar la consulta SQL
+        $sql = "INSERT INTO tbl_users (username, pwd, role_id) VALUES (:username, :pwd, :role_id)";
+        $stmt = $conexion->prepare($sql);
 
-    $sql = "INSERT INTO tbl_users (username, pwd, role_id) VALUES ('$username', '$hashed_password', $role)";
+        // Vincular los parámetros
+        $stmt->bindParam(':username', $username, PDO::PARAM_STR);
+        $stmt->bindParam(':pwd', $hashed_password, PDO::PARAM_STR);
+        $stmt->bindParam(':role_id', $role, PDO::PARAM_INT);
 
-    if (mysqli_query($conexion, $sql)) {
-        header('Location: ./usuarios.php');
+        // Ejecutar la consulta
+        if ($stmt->execute()) {
+            header('Location: ./usuarios.php');
+        } else {
+            echo "Error: No se pudo ejecutar la consulta.";
+        }
     } else {
-        echo "Error: " . $sql . "<br>" . mysqli_error($conexion);
+        echo "Acceso no autorizado.";
     }
-
-    mysqli_close($conexion);
-} else {
-    echo "Acceso no autorizado.";
+} catch (PDOException $e) {
+    die("Error de conexión: " . $e->getMessage());
 }
 ?>

@@ -8,95 +8,96 @@ if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'Administrador'
 
 include_once('../../conexion/conexion.php');
 
-if (!isset($conexion)) {
-    die("Error: La conexión a la base de datos no se estableció.");
-}
+try {
+    if (!isset($conexion)) {
+        die("Error: La conexión a la base de datos no se estableció.");
+    }
 
-if (isset($_GET['id'])) {
-    $tableId = intval($_GET['id']); 
+    if (isset($_GET['id'])) {
+        $tableId = intval($_GET['id']); 
 
-    $sql = "
-        SELECT 
-            tbl_tables.table_id,
-            tbl_tables.table_number,
-            tbl_rooms.name AS room_name,
-            tbl_tables.status,
-            tbl_occupations.start_time,
-            tbl_occupations.end_time,
-            tbl_users.username,
-            tbl_users.user_id
-        FROM 
-            tbl_tables
-        INNER JOIN 
-            tbl_rooms ON tbl_tables.room_id = tbl_rooms.room_id
-        INNER JOIN 
-            tbl_occupations ON tbl_tables.table_id = tbl_occupations.table_id
-        INNER JOIN 
-            tbl_users ON tbl_occupations.user_id = tbl_users.user_id
-        WHERE 
-            tbl_tables.table_id = ?
-    ";
+        $sql = "
+            SELECT 
+                tbl_tables.table_id,
+                tbl_tables.table_number,
+                tbl_rooms.name AS room_name,
+                tbl_tables.status,
+                tbl_occupations.start_time,
+                tbl_occupations.end_time,
+                tbl_users.username,
+                tbl_users.user_id
+            FROM 
+                tbl_tables
+            INNER JOIN 
+                tbl_rooms ON tbl_tables.room_id = tbl_rooms.room_id
+            INNER JOIN 
+                tbl_occupations ON tbl_tables.table_id = tbl_occupations.table_id
+            INNER JOIN 
+                tbl_users ON tbl_occupations.user_id = tbl_users.user_id
+            WHERE 
+                tbl_tables.table_id = ?
+        ";
 
-    $stmt = $conexion->prepare($sql);
-    $stmt->bind_param("i", $tableId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $occupacion = $result->fetch_assoc();
+        $stmt = $conexion->prepare($sql);
+        $stmt->bindParam(1, $tableId, PDO::PARAM_INT);
+        $stmt->execute();
+        $occupacion = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$occupacion) {
-        echo "No se encontró la ocupación.";
+        if (!$occupacion) {
+            echo "No se encontró la ocupación.";
+            exit();
+        }
+
+        // Procesar el formulario de actualización
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $nuevoEstado = $_POST['estado'];
+            $nuevoUsuarioId = intval($_POST['usuario']);
+            $nuevaFechaInicio = $_POST['start_time'];
+            $nuevaFechaFin = $_POST['end_time'];
+
+            // Actualizar ocupación
+            $updateSql = "
+                UPDATE tbl_occupations
+                SET start_time = ?, end_time = ?, user_id = ?
+                WHERE table_id = ?
+            ";
+
+            $stmtUpdate = $conexion->prepare($updateSql);
+            $stmtUpdate->bindParam(1, $nuevaFechaInicio, PDO::PARAM_STR);
+            $stmtUpdate->bindParam(2, $nuevaFechaFin, PDO::PARAM_STR);
+            $stmtUpdate->bindParam(3, $nuevoUsuarioId, PDO::PARAM_INT);
+            $stmtUpdate->bindParam(4, $tableId, PDO::PARAM_INT);
+
+            if ($stmtUpdate->execute()) {
+                // Actualizar estado de la mesa
+                $estadoSql = "UPDATE tbl_tables SET status = ? WHERE table_id = ?";
+                $stmtEstado = $conexion->prepare($estadoSql);
+                $stmtEstado->bindParam(1, $nuevoEstado, PDO::PARAM_STR);
+                $stmtEstado->bindParam(2, $tableId, PDO::PARAM_INT);
+                $stmtEstado->execute();
+                header("Location: ../historial.php?msg=ocupacion_actualizada");
+            } else {
+                echo "Error al actualizar la ocupación.";
+            }
+        }
+
+        // Obtener usuarios para el selector
+        $usuariosSql = "SELECT user_id, username FROM tbl_users";
+        $usuariosStmt = $conexion->prepare($usuariosSql);
+        $usuariosStmt->execute();
+        $usuarios = $usuariosStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } else {
+        header("Location: ../historial.php?error=id_no_proporcionado");
         exit();
     }
 
-    $stmt->close();
-} else {
-    header("Location: ../historial.php?error=id_no_proporcionado");
-    exit();
+    // Cerrar la conexión a la base de datos
+    $conexion = null;
+
+} catch (PDOException $e) {
+    die("Error de conexión: " . $e->getMessage());
 }
-
-// Procesar el formulario de actualización
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nuevoEstado = $_POST['estado'];
-    $nuevoUsuarioId = intval($_POST['usuario']);
-    $nuevaFechaInicio = $_POST['start_time'];
-    $nuevaFechaFin = $_POST['end_time'];
-
-    $updateSql = "
-        UPDATE tbl_occupations
-        SET start_time = ?, end_time = ?, user_id = ?
-        WHERE table_id = ?
-    ";
-    
-    if ($stmtUpdate = $conexion->prepare($updateSql)) {
-        $stmtUpdate->bind_param("ssii", $nuevaFechaInicio, $nuevaFechaFin, $nuevoUsuarioId, $tableId);
-        
-        if ($stmtUpdate->execute()) {
-            $estadoSql = "UPDATE tbl_tables SET status = ? WHERE table_id = ?";
-            if ($stmtEstado = $conexion->prepare($estadoSql)) {
-                $stmtEstado->bind_param("si", $nuevoEstado, $tableId);
-                $stmtEstado->execute();
-                $stmtEstado->close();
-            }
-            header("Location: ../historial.php?msg=ocupacion_actualizada");
-        } else {
-            echo "Error al actualizar la ocupación.";
-        }
-        $stmtUpdate->close();
-    } else {
-        echo "Error en la preparación de la consulta.";
-    }
-}
-
-$usuariosSql = "SELECT user_id, username FROM tbl_users";
-$usuariosResult = $conexion->query($usuariosSql);
-$usuarios = [];
-if ($usuariosResult->num_rows > 0) {
-    while ($row = $usuariosResult->fetch_assoc()) {
-        $usuarios[] = $row;
-    }
-}
-
-$conexion->close();
 ?>
 
 <!DOCTYPE html>
@@ -142,16 +143,16 @@ $conexion->close();
             </div>
             
             <div class="form-group">
-    <label for="start_time" class="texto-historial">Fecha de Ocupación</label>
-    <input type="datetime-local" class="form-control" id="start_time" name="start_time" 
-           value="<?= $occupacion['start_time'] ? date('Y-m-d\TH:i', strtotime($occupacion['start_time'])) : '' ?>">
-</div>
+                <label for="start_time" class="texto-historial">Fecha de Ocupación</label>
+                <input type="datetime-local" class="form-control" id="start_time" name="start_time" 
+                       value="<?= $occupacion['start_time'] ? date('Y-m-d\TH:i', strtotime($occupacion['start_time'])) : '' ?>">
+            </div>
 
-<div class="form-group">
-    <label for="end_time" class="texto-historial">Fecha de Liberación</label>
-    <input type="datetime-local" class="form-control" id="end_time" name="end_time" 
-           value="<?= $occupacion['end_time'] ? date('Y-m-d\TH:i', strtotime($occupacion['end_time'])) : '' ?>">
-</div>
+            <div class="form-group">
+                <label for="end_time" class="texto-historial">Fecha de Liberación</label>
+                <input type="datetime-local" class="form-control" id="end_time" name="end_time" 
+                       value="<?= $occupacion['end_time'] ? date('Y-m-d\TH:i', strtotime($occupacion['end_time'])) : '' ?>">
+            </div>
             
             <button type="submit" class="btn btn-primary">Guardar Cambios</button>
             <a href="../historial.php" class="btn btn-secondary">Cancelar</a>

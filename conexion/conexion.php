@@ -4,12 +4,8 @@ $dbUser = "root";
 $dbPsswd = "";
 $dbName = "db_mokadictos";
 
-
-try{
-    $conexion = @mysqli_connect($dbServer, $dbUser, $dbPsswd, $dbName);
+try {
+    $conexion = new PDO('mysql:host=localhost;dbname=db_mokadictos', 'root', '');
+}catch(Exception $e){
+    echo "Error de conexión —-----> $e";
 }
-catch (Exception $e)
-{
-    echo "Error de conexion:" . $e->getMessage();
-}
-   

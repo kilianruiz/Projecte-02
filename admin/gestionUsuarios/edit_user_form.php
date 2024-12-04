@@ -9,10 +9,6 @@ if (!isset($_SESSION['username']) || $_SESSION['role_name'] !== 'Administrador')
 
 include_once('../../conexion/conexion.php');
 
-if (!isset($conexion)) {
-    die("Error: La conexión a la base de datos no se estableció.");
-}
-
 // Verificar que se recibió el ID del usuario
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     die("Error: ID de usuario no proporcionado.");
@@ -20,27 +16,26 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $user_id = intval($_GET['id']);
 
-// Obtener datos del usuario por ID
-$sql = "SELECT username, role_id FROM tbl_users WHERE user_id = ?";
-$stmt = $conexion->prepare($sql);
-$stmt->bind_param('i', $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
+try {
+    // Obtener datos del usuario por ID
+    $sql = "SELECT username, role_id FROM tbl_users WHERE user_id = ?";
+    $stmt = $conexion->prepare($sql);
+    $stmt->execute([$user_id]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$user) {
-    die("Error: Usuario no encontrado.");
+    if (!$user) {
+        die("Error: Usuario no encontrado.");
+    }
+
+    // Obtener todos los roles
+    $sql_roles = "SELECT role_id, role_name FROM tbl_roles";
+    $stmt_roles = $conexion->query($sql_roles);
+    $roles = $stmt_roles->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (PDOException $e) {
+    die("Error: " . $e->getMessage());
 }
-
-// Obtener todos los roles
-$sql_roles = "SELECT role_id, role_name FROM tbl_roles";
-$result_roles = $conexion->query($sql_roles);
-$roles = $result_roles->fetch_all(MYSQLI_ASSOC);
-
-$stmt->close();
-$conexion->close();
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -56,14 +51,16 @@ $conexion->close();
 
         <div class="form-group">
             <label for="username">Nombre de Usuario:</label>
-            <input type="text" name="username" id="username" class="form-control" value="<?php echo htmlspecialchars($user['username']); ?>">
+            <input type="text" name="username" id="username" class="form-control" 
+                   value="<?php echo htmlspecialchars($user['username']); ?>">
         </div>
 
         <div class="form-group">
             <label for="role_id">Rol:</label>
             <select name="role_id" id="role_id" class="form-control">
                 <?php foreach ($roles as $role): ?>
-                    <option value="<?php echo $role['role_id']; ?>" <?php echo $role['role_id'] == $user['role_id'] ? 'selected' : ''; ?>>
+                    <option value="<?php echo htmlspecialchars($role['role_id']); ?>" 
+                            <?php echo $role['role_id'] == $user['role_id'] ? 'selected' : ''; ?>>
                         <?php echo htmlspecialchars($role['role_name']); ?>
                     </option>
                 <?php endforeach; ?>
