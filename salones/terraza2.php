@@ -41,11 +41,12 @@ $usuario = $_SESSION['usuario'];
 $sqlGetUserId = "SELECT user_id FROM tbl_users WHERE username = ?";
 $stmtGetUserId = $conexion->prepare($sqlGetUserId);
 if ($stmtGetUserId) {
-    $stmtGetUserId->bind_param("s", $usuario);
-    $stmtGetUserId->execute();
-    $result = $stmtGetUserId->get_result();
-    $userId = ($result->num_rows > 0) ? $result->fetch_assoc()['user_id'] : null;
-    $stmtGetUserId->close();
+    $stmtGetUserId->execute([$usuario]);
+    $userId = $stmtGetUserId->fetchColumn();
+    if (!$userId) {
+        echo "Usuario no encontrado.";
+        exit;
+    }
 } else {
     echo "Error en la consulta SQL.";
     exit;
@@ -53,50 +54,45 @@ if ($stmtGetUserId) {
 
 // Actualizar la ocupación o desocupación de una mesa
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && isset($_POST['tableId'])) {
-    $tableId = $_POST['tableId'];
+    $tableId = intval($_POST['tableId']);
     $action = $_POST['action'];
 
     if ($action === 'occupy') {
+        // Ocupa una mesa
         $sqlUpdateTable = "UPDATE tbl_tables SET status = 'occupied' WHERE table_id = ?";
         $stmtUpdateTable = $conexion->prepare($sqlUpdateTable);
         if ($stmtUpdateTable) {
-            $stmtUpdateTable->bind_param("i", $tableId);
-            $stmtUpdateTable->execute();
+            $stmtUpdateTable->execute([$tableId]);
 
             $sqlInsertOccupation = "INSERT INTO tbl_occupations (table_id, user_id, start_time) VALUES (?, ?, CURRENT_TIMESTAMP)";
             $stmtInsertOccupation = $conexion->prepare($sqlInsertOccupation);
             if ($stmtInsertOccupation) {
-                $stmtInsertOccupation->bind_param("ii", $tableId, $userId);
-                $stmtInsertOccupation->execute();
-                $stmtInsertOccupation->close();
+                $stmtInsertOccupation->execute([$tableId, $userId]);
             }
-            $stmtUpdateTable->close();
         }
     } elseif ($action === 'free') {
+        // Libera una mesa
         $sqlUpdateTable = "UPDATE tbl_tables SET status = 'free' WHERE table_id = ?";
         $stmtUpdateTable = $conexion->prepare($sqlUpdateTable);
         if ($stmtUpdateTable) {
-            $stmtUpdateTable->bind_param("i", $tableId);
-            $stmtUpdateTable->execute();
+            $stmtUpdateTable->execute([$tableId]);
 
             $sqlEndOccupation = "UPDATE tbl_occupations SET end_time = CURRENT_TIMESTAMP WHERE table_id = ? AND end_time IS NULL";
             $stmtEndOccupation = $conexion->prepare($sqlEndOccupation);
             if ($stmtEndOccupation) {
-                $stmtEndOccupation->bind_param("i", $tableId);
-                $stmtEndOccupation->execute();
-                $stmtEndOccupation->close();
+                $stmtEndOccupation->execute([$tableId]);
             }
-            $stmtUpdateTable->close();
         }
-    } 
+    }
 
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
 }
 
 // Consultar el estado actual de cada mesa en la terraza 2
-$sql = "SELECT table_id, status FROM tbl_tables WHERE room_id = 2"; 
-$result = $conexion->query($sql);
+$sql = "SELECT table_id, status FROM tbl_tables WHERE room_id = 2";
+$stmt = $conexion->query($sql);
+$mesas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -104,7 +100,7 @@ $result = $conexion->query($sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terraza II</title> 
+    <title>Terraza II</title>
     <link rel="stylesheet" href="../styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sancreek&display=swap" rel="stylesheet">
@@ -117,11 +113,11 @@ $result = $conexion->query($sql);
         </div>
         <div class="grid2">
             <?php
-            $roomId = 2; 
+            $roomId = 2;
 
-            while ($row = $result->fetch_assoc()) {
-                $tableId = $row['table_id'];
-                $status = $row['status'];
+            foreach ($mesas as $mesa) {
+                $tableId = $mesa['table_id'];
+                $status = $mesa['status'];
                 $romanTableId = romanNumerals($tableId);
                 $imgSrc = ($status === 'occupied') ? '../img/sombrillaRoja.webp' : '../img/sombrilla.webp';
 

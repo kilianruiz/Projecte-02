@@ -31,7 +31,7 @@ function romanNumerals($number) {
 
 // Verificar si el usuario ha iniciado sesión
 if (!isset($_SESSION['usuario'])) {
-    header('Location: ../index.php?error=1') ;   
+    header('Location: ../index.php?error=1');
     exit;
 }
 
@@ -40,36 +40,32 @@ $usuario = $_SESSION['usuario'];
 // Obtener ID del usuario basado en el nombre de usuario
 $sqlGetUserId = "SELECT user_id FROM tbl_users WHERE username = ?";
 $stmtGetUserId = $conexion->prepare($sqlGetUserId);
-$stmtGetUserId->bind_param("s", $usuario);
-$stmtGetUserId->execute();
-$result = $stmtGetUserId->get_result();
-$userId = ($result->num_rows > 0) ? $result->fetch_assoc()['user_id'] : null;
+$stmtGetUserId->execute([$usuario]);
+$userId = $stmtGetUserId->fetchColumn();
 
 // Actualizar la ocupación o desocupación de una mesa
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && isset($_POST['tableId'])) {
-    $tableId = $_POST['tableId'];
+    $tableId = intval($_POST['tableId']);
     $action = $_POST['action'];
 
     if ($action === 'occupy') {
+        // Ocupa una mesa
         $sqlUpdateTable = "UPDATE tbl_tables SET status = 'occupied' WHERE table_id = ?";
         $stmtUpdateTable = $conexion->prepare($sqlUpdateTable);
-        $stmtUpdateTable->bind_param("i", $tableId);
-        $stmtUpdateTable->execute();
+        $stmtUpdateTable->execute([$tableId]);
 
         $sqlInsertOccupation = "INSERT INTO tbl_occupations (table_id, user_id, start_time) VALUES (?, ?, CURRENT_TIMESTAMP)";
         $stmtInsertOccupation = $conexion->prepare($sqlInsertOccupation);
-        $stmtInsertOccupation->bind_param("ii", $tableId, $userId);
-        $stmtInsertOccupation->execute();
+        $stmtInsertOccupation->execute([$tableId, $userId]);
     } elseif ($action === 'free') {
+        // Libera una mesa
         $sqlUpdateTable = "UPDATE tbl_tables SET status = 'free' WHERE table_id = ?";
         $stmtUpdateTable = $conexion->prepare($sqlUpdateTable);
-        $stmtUpdateTable->bind_param("i", $tableId);
-        $stmtUpdateTable->execute();
+        $stmtUpdateTable->execute([$tableId]);
 
         $sqlEndOccupation = "UPDATE tbl_occupations SET end_time = CURRENT_TIMESTAMP WHERE table_id = ? AND end_time IS NULL";
         $stmtEndOccupation = $conexion->prepare($sqlEndOccupation);
-        $stmtEndOccupation->bind_param("i", $tableId);
-        $stmtEndOccupation->execute();
+        $stmtEndOccupation->execute([$tableId]);
     }
 
     header("Location: " . $_SERVER['PHP_SELF']);
@@ -78,7 +74,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && isset($_P
 
 // Consultar el estado actual de cada mesa en la terraza
 $sql = "SELECT table_id, status FROM tbl_tables WHERE room_id = 1";
-$result = $conexion->query($sql);
+$stmt = $conexion->query($sql);
+$mesas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -100,9 +97,9 @@ $result = $conexion->query($sql);
         <div class="grid">
             <?php
             // Generar HTML para cada mesa
-            while ($row = $result->fetch_assoc()) {
-                $tableId = $row['table_id'];
-                $status = $row['status'];
+            foreach ($mesas as $mesa) {
+                $tableId = $mesa['table_id'];
+                $status = $mesa['status'];
                 $romanTableId = romanNumerals($tableId); // Convertimos a números romanos
                 $imgSrc = ($status === 'occupied') ? '../img/sombrillaRoja.webp' : '../img/sombrilla.webp';
 

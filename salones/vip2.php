@@ -31,7 +31,7 @@ function romanNumerals($number) {
 
 // Verificar si el usuario ha iniciado sesión
 if (!isset($_SESSION['usuario'])) {
-    header('Location: ../index.php?error=1') ;   
+    header('Location: ../index.php?error=1');
     exit;
 }
 
@@ -40,36 +40,37 @@ $usuario = $_SESSION['usuario'];
 // Obtener ID del usuario basado en el nombre de usuario
 $sqlGetUserId = "SELECT user_id FROM tbl_users WHERE username = ?";
 $stmtGetUserId = $conexion->prepare($sqlGetUserId);
-$stmtGetUserId->bind_param("s", $usuario);
-$stmtGetUserId->execute();
-$result = $stmtGetUserId->get_result();
-$userId = ($result->num_rows > 0) ? $result->fetch_assoc()['user_id'] : null;
+$stmtGetUserId->execute([$usuario]);
+$userId = $stmtGetUserId->fetchColumn();
+
+if (!$userId) {
+    echo "Usuario no encontrado.";
+    exit;
+}
 
 // Actualizar la ocupación o desocupación de una mesa
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && isset($_POST['tableId'])) {
-    $tableId = $_POST['tableId'];
+    $tableId = intval($_POST['tableId']);
     $action = $_POST['action'];
 
     if ($action === 'occupy') {
+        // Ocupa una mesa
         $sqlUpdateTable = "UPDATE tbl_tables SET status = 'occupied' WHERE table_id = ?";
         $stmtUpdateTable = $conexion->prepare($sqlUpdateTable);
-        $stmtUpdateTable->bind_param("i", $tableId);
-        $stmtUpdateTable->execute();
+        $stmtUpdateTable->execute([$tableId]);
 
         $sqlInsertOccupation = "INSERT INTO tbl_occupations (table_id, user_id, start_time) VALUES (?, ?, CURRENT_TIMESTAMP)";
         $stmtInsertOccupation = $conexion->prepare($sqlInsertOccupation);
-        $stmtInsertOccupation->bind_param("ii", $tableId, $userId);
-        $stmtInsertOccupation->execute();
+        $stmtInsertOccupation->execute([$tableId, $userId]);
     } elseif ($action === 'free') {
+        // Libera una mesa
         $sqlUpdateTable = "UPDATE tbl_tables SET status = 'free' WHERE table_id = ?";
         $stmtUpdateTable = $conexion->prepare($sqlUpdateTable);
-        $stmtUpdateTable->bind_param("i", $tableId);
-        $stmtUpdateTable->execute();
+        $stmtUpdateTable->execute([$tableId]);
 
         $sqlEndOccupation = "UPDATE tbl_occupations SET end_time = CURRENT_TIMESTAMP WHERE table_id = ? AND end_time IS NULL";
         $stmtEndOccupation = $conexion->prepare($sqlEndOccupation);
-        $stmtEndOccupation->bind_param("i", $tableId);
-        $stmtEndOccupation->execute();
+        $stmtEndOccupation->execute([$tableId]);
     }
 
     header("Location: " . $_SERVER['PHP_SELF']);
@@ -78,7 +79,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && isset($_P
 
 // Consultar el estado actual de la mesa 50
 $sql = "SELECT table_id, status FROM tbl_tables WHERE table_id = 50";
-$result = $conexion->query($sql);
+$stmt = $conexion->query($sql);
+$mesa = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -95,14 +97,14 @@ $result = $conexion->query($sql);
     <div><img src="./../img/logo.webp" alt="Logo de la página" class="superpuesta"><br></div>
     <div class="container2">
         <div class="header">
-            <h1>V I P II</h1> 
+            <h1>V I P    II</h1>
         </div>
         <div class="grid8">
             <?php
             // Generar HTML para la mesa 50
-            if ($row = $result->fetch_assoc()) {
-                $tableId = $row['table_id'];
-                $status = $row['status'];
+            if ($mesa) {
+                $tableId = $mesa['table_id'];
+                $status = $mesa['status'];
                 $romanTableId = romanNumerals($tableId); // Convertimos a números romanos
                 $imgSrc = ($status === 'occupied') ? '../img/sombrillaRoja.webp' : '../img/sombrilla.webp';
 
@@ -118,6 +120,8 @@ $result = $conexion->query($sql);
                     <input type='hidden' name='newRoomId' id='newRoomId$tableId'>
                 </form>
                 ";
+            } else {
+                echo "<p>No se encontró información sobre la mesa 50.</p>";
             }
             ?>
         </div>
