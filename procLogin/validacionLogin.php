@@ -30,6 +30,8 @@ try {
         $result_role = mysqli_stmt_get_result($stmt_role);
         $role_data = mysqli_fetch_assoc($result_role);
         mysqli_stmt_close($stmt_role);
+
+        // Guardar el rol en la sesión
         $_SESSION['role_name'] = $role_data['role_name'];
 
         if ($role_data['role_name'] === 'Administrador') {
