@@ -35,7 +35,7 @@ try {
         $_SESSION['role_name'] = $role_data['role_name'];
 
         if ($role_data['role_name'] === 'Administrador') {
-            header('Location: ../admin/historial.php'); // Página de bienvenida del admin
+            header('Location: ../admin/principalAdmin.php'); // Página de bienvenida del admin
             exit();
         } else {
             header('Location: ../paginaPrincipal.php'); // Página principal para usuarios normales
