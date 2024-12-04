@@ -2,7 +2,7 @@
 session_start();
 
 // Verificar si el usuario está autenticado y es administrador
-if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'Administrador') {
+if ($_SESSION['role_name'] !== 'Administrador') {
     header('Location: ../index.php?error=2');
     exit();
 }
@@ -68,7 +68,6 @@ if ($usuariosResult->num_rows > 0) {
         $usuarios[] = $row['username'];
     }
 }
-
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -80,9 +79,12 @@ if ($usuariosResult->num_rows > 0) {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-    <div class="container my-5">
-        <h1 class="text-center">Panel de Administración - Historial y Estado de Salas</h1>
 
+    <div class="containerHistorial">
+    <h1 class="text-center">Panel de Administración - Historial y Estado de Salas</h1>
+        <div class="text-right mb-3">
+            <a href="./gestionUsuarios/usuarios.php" class="btn btn-info">Gestionar Usuarios</a>
+        </div>
         <!-- Filtros de Búsqueda -->
         <form method="POST" class="mb-4">
             <div class="row">
@@ -118,16 +120,11 @@ if ($usuariosResult->num_rows > 0) {
                     <label for="fecha_ocupacion" class="texto-historial">Fecha de Ocupación</label>
                     <input type="date" class="form-control" name="fecha_ocupacion" id="fecha_ocupacion" value="<?= htmlspecialchars($fechaFiltro) ?>">
                 </div>
+
             </div>
             <button type="submit" class="btn btn-primary mt-3">Filtrar</button>
         </form>
-        <form action="./crear_ocupacion.php" method="post">
-        <button type="submit" class="btn btn-primary mt-3">Crear registro</button>
-        </form>
-        <form action="./crear_usuario.php" method="post">
-        <button type="submit" class="btn btn-primary mt-3">Crear usuario</button>
-        </form>
-<br><br>
+
         <!-- Tabla de Resultados -->
             <?php
             if ($result->num_rows > 0) {
@@ -159,7 +156,7 @@ if ($usuariosResult->num_rows > 0) {
                             <td>" . ($rows[$i]["end_time"] ? $rows[$i]["end_time"] : "Ocupada actualmente") . "</td>
                             <td>" . $rows[$i]["username"] . "</td>
                             <td>
-                                <a href='editar_ocupacion.php?id=" . $rows[$i]["table_id"] . "' class='btn btn-warning btn-sm'>Editar</a>
+                                <a href='./gestionMesas/editar_ocupacion.php?id=" . $rows[$i]["table_id"] . "' class='btn btn-warning btn-sm'>Editar</a>
                                 <button class='btn btn-danger btn-sm' onclick='confirmarEliminacion(" . $rows[$i]["table_id"] . ")'>Eliminar</button>
                             </td>
                           </tr>";
@@ -191,14 +188,17 @@ if ($usuariosResult->num_rows > 0) {
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Redirigir al script de eliminación pasando el ID de la mesa
-                    window.location.href = 'eliminar_ocupacion.php?id=' + tableId;
+                    // Redirigir a eliminar_ocupacion.php con el ID de la mesa
+                    window.location.href = './gestionMesas/eliminar_ocupacion.php?id=' + tableId;
                 }
             });
         }
-        </script>
-    </div>
-    <script src="../validaciones/funciones.js"></script>
 
+        function logout() {
+            window.location.href = "../cerrarSesion/logout.php";
+        }
+        </script>
+
+    </div>
 </body>
 </html>

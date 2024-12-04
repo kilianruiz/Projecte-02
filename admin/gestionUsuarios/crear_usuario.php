@@ -1,20 +1,11 @@
 <?php
 session_start();
 
+// Verificar si el usuario está autenticado y es administrador
 if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'Administrador') {
-    header('Location: ../index.php?error=2');
+    header('Location: ../../index.php?error=2');
     exit();
 }
-
-include_once('../conexion/conexion.php');
-
-if (!isset($conexion)) {
-    die("Error: La conexión a la base de datos no se estableció.");
-}
-
-$sql = "SELECT user_id, username FROM tbl_users";
-$result = mysqli_query($conexion, $sql);
-
 ?>
 
 <!DOCTYPE html>
@@ -22,7 +13,7 @@ $result = mysqli_query($conexion, $sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Usuario</title>
+    <title>Registro de Usuarios</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -48,27 +39,30 @@ $result = mysqli_query($conexion, $sql);
             <div class="col-md-6">
                 <div class="card shadow">
                     <div class="card-header text-center">
-                        <h3>Editar Usuario</h3>
+                        <h3>Registro de Usuarios</h3>
                     </div>
                     <div class="card-body">
-                        <form action="edit_user.php" method="POST">
+                        <form action="valida_crear_usuarios.php" method="POST">
                             <div class="mb-3">
-                                <label for="user" class="form-label">Selecciona un usuario:</label>
-                                <select name="user_id" id="user" class="form-select" required>
-                                    <option value="">--Selecciona un usuario--</option>
-                                    <?php
-                                    if (mysqli_num_rows($result) > 0) {
-                                        while ($row = mysqli_fetch_assoc($result)) {
-                                            echo "<option value='" . $row['user_id'] . "'>" . htmlspecialchars($row['username']) . "</option>";
-                                        }
-                                    } else {
-                                        echo "<option value=''>No hay usuarios</option>";
-                                    }
-                                    ?>
+                                <label for="username" class="form-label">Nombre de Usuario:</label>
+                                <input type="text" name="username" id="username" class="form-control" placeholder="Nombre de usuario" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Contraseña:</label>
+                                <input type="password" name="password" id="password" class="form-control" placeholder="Contraseña" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="role" class="form-label">Rol:</label>
+                                <select name="role" id="role" class="form-select" required>
+                                    <option value="1">Camarero</option>
+                                    <option value="2">Administrador</option>
                                 </select>
                             </div>
                             <div class="d-grid">
-                                <button type="submit" name="edit" class="btn btn-primary">Editar</button>
+                                <button type="submit" name="submit" class="btn btn-primary">Registrar Usuario</button> 
+                                <br><br>
+                                <a href="./usuarios.php"class="btn btn-primary">Volver</a>
+
                             </div>
                         </form>
                     </div>
@@ -77,10 +71,7 @@ $result = mysqli_query($conexion, $sql);
         </div>
     </div>
 
+    <!-- Incluir Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
-<?php
-mysqli_close($conexion);
-?>
