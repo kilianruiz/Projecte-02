@@ -24,7 +24,7 @@ ALTER TABLE tbl_users ADD lastname VARCHAR(50);
 -- Tabla de Salas
 CREATE TABLE tbl_rooms (
     room_id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(50) NOT NULL,
+    name_rooms VARCHAR(50) NOT NULL,
     capacity INT NOT NULL,
     description TEXT
 );
@@ -171,3 +171,6 @@ INSERT INTO tbl_tables (room_id, current_room_id, table_number, capacity, status
 INSERT INTO tbl_users (username, lastname, pwd, role_id)
 VALUES ('pau', 'blanch', SHA2('qweQWE123', 256), 
     (SELECT role_id FROM tbl_roles WHERE role_name = 'Administrador'));
+
+ALTER TABLE tbl_users ADD room_id INT;
+ALTER TABLE tbl_users ADD CONSTRAINT fk_room FOREIGN KEY (room_id) REFERENCES tbl_rooms(room_id) ON DELETE SET NULL;
