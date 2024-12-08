@@ -45,7 +45,7 @@ if (!isset($conexion)) {
 
             <!-- Gestion de edicion -->
             <div class="room-category">
-            <form action="./historial.php">
+            <form action="./gestionEdicion/crudMesas.php">
                     <button><img class="editar" src="../img/editar1.png" alt="Terrazas" onclick="mostrarEstadoTerrazas()"></button>
                 </form>
             </div>

@@ -9,6 +9,7 @@ if ($_SESSION['role_name'] !== 'Administrador') {
 
 include_once('../conexion/conexion.php');
 
+// Verificar si la conexión a la base de datos está establecida
 if (!isset($conexion)) {
     die("Error: La conexión a la base de datos no se estableció.");
 }
@@ -24,7 +25,7 @@ $sql = "
     SELECT 
         tbl_tables.table_id,
         tbl_tables.table_number,
-        tbl_rooms.name AS room_name,
+        tbl_rooms.name_rooms AS room_name,  
         tbl_tables.status,
         tbl_occupations.start_time,
         tbl_occupations.end_time,
@@ -43,7 +44,7 @@ $sql = "
 // Construcción de los filtros con PDO
 $params = [];
 if ($salaFiltro != '') {
-    $sql .= " AND tbl_rooms.name LIKE :sala";
+    $sql .= " AND tbl_rooms.name_rooms LIKE :sala"; 
     $params[':sala'] = "%$salaFiltro%";
 }
 if ($estadoFiltro != '') {
@@ -122,7 +123,6 @@ $usuarios = $usuariosStmt->fetchAll(PDO::FETCH_COLUMN);
                     <label for="fecha_ocupacion" class="texto-historial">Fecha de Ocupación</label>
                     <input type="date" class="form-control" name="fecha_ocupacion" id="fecha_ocupacion" value="<?= htmlspecialchars($fechaFiltro) ?>">
                 </div>
-
             </div>
             <button type="submit" class="btn btn-primary mt-3">Filtrar</button>
         </form>
@@ -147,7 +147,7 @@ $usuarios = $usuariosStmt->fetchAll(PDO::FETCH_COLUMN);
                 foreach ($result as $row) {
                     $estadoClase = $row["status"] == "occupied" ? "table-danger" : "table-success";
                     echo "<tr class='{$estadoClase}'>
-                            <td>" . htmlspecialchars($row["table_id"]) . "</td>
+                            <td>" . htmlspecialchars($row["table_number"]) . "</td>
                             <td>" . htmlspecialchars($row["room_name"]) . "</td>
                             <td>" . ucfirst(htmlspecialchars($row["status"])) . "</td>
                             <td>" . ($row["start_time"] ?: "N/A") . "</td>
@@ -169,12 +169,12 @@ $usuarios = $usuariosStmt->fetchAll(PDO::FETCH_COLUMN);
             <form id="eliminarHistorialForm" action="eliminar_historial.php" method="post">
                 <button type="button" class="btn btn-danger" onclick="confirmarEliminacion()">Eliminar Historial de Ocupaciones</button>
             </form>
-
         </div>
         <button class="logout-button" onclick="logout()">Cerrar Sesión</button>
         <form action="./principalAdmin.php">
             <button class="logout-button">Volver</button>
         </form>
+
         <!-- Script para la confirmación con SweetAlert -->
         <script>
         function confirmarEliminacion(tableId) {
