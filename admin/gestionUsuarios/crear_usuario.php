@@ -1,9 +1,31 @@
 <?php
 session_start();
 
-// Verificar si el usuario está autenticado y es administrador
+// Verificar si el usuario está autenticado y tiene rol de administrador
 if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'Administrador') {
     header('Location: ../../index.php?error=2');
+    exit();
+}
+
+include_once('../../conexion/conexion.php');
+
+try {
+    // Verificar si la conexión PDO está establecida
+    if (!isset($conexion)) {
+        throw new Exception("Error: La conexión a la base de datos no se estableció.");
+    }
+
+    // Obtener todas las habitaciones (name_rooms)
+    $sql = "SELECT room_id, name_rooms FROM tbl_rooms";
+    $stmt = $conexion->prepare($sql);
+    $stmt->execute();
+    $rooms = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (PDOException $e) {
+    header('Location: usuarios.php?error=3&message=' . urlencode($e->getMessage()));
+    exit();
+} catch (Exception $e) {
+    header('Location: usuarios.php?error=4&message=' . urlencode($e->getMessage()));
     exit();
 }
 ?>
@@ -43,14 +65,31 @@ if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'Administrador'
                     </div>
                     <div class="card-body">
                         <form action="valida_crear_usuarios.php" method="POST">
+                            <!-- Nombre de Usuario -->
                             <div class="mb-3">
                                 <label for="username" class="form-label">Nombre de Usuario:</label>
-                                <input type="text" name="username" id="username" class="form-control" placeholder="Nombre de usuario" required>
+                                <input 
+                                    type="text" 
+                                    name="username" 
+                                    id="username" 
+                                    class="form-control" 
+                                    placeholder="Nombre de usuario" 
+                                    required>
                             </div>
+
+                            <!-- Contraseña -->
                             <div class="mb-3">
                                 <label for="password" class="form-label">Contraseña:</label>
-                                <input type="password" name="password" id="password" class="form-control" placeholder="Contraseña" required>
+                                <input 
+                                    type="password" 
+                                    name="password" 
+                                    id="password" 
+                                    class="form-control" 
+                                    placeholder="Contraseña" 
+                                    required>
                             </div>
+
+                            <!-- Rol -->
                             <div class="mb-3">
                                 <label for="role" class="form-label">Rol:</label>
                                 <select name="role" id="role" class="form-select" required>
@@ -58,11 +97,12 @@ if (!isset($_SESSION['role_name']) || $_SESSION['role_name'] !== 'Administrador'
                                     <option value="2">Administrador</option>
                                 </select>
                             </div>
-                            <div class="d-grid">
-                                <button type="submit" name="submit" class="btn btn-primary">Registrar Usuario</button> 
-                                <br><br>
-                                <a href="./usuarios.php"class="btn btn-primary">Volver</a>
 
+                            <!-- Botones -->
+                            <div class="d-grid">
+                                <button type="submit" name="submit" class="btn btn-primary">Registrar Usuario</button>
+                                <br><br>
+                                <a href="./usuarios.php" class="btn btn-primary">Volver</a>
                             </div>
                         </form>
                     </div>

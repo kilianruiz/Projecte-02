@@ -9,33 +9,40 @@ if (!isset($_SESSION['username']) || $_SESSION['role_name'] !== 'Administrador')
 
 include_once('../../conexion/conexion.php');
 
-// Verificar que se recibió el ID del usuario
-if (!isset($_GET['id']) || empty($_GET['id'])) {
-    die("Error: ID de usuario no proporcionado.");
+// Verificar que se recibió un ID válido
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    header('Location: usuarios.php?error=1'); // Redirigir en caso de error
+    exit();
 }
 
 $user_id = intval($_GET['id']);
 
 try {
     // Obtener datos del usuario por ID
-    $sql = "SELECT username, role_id FROM tbl_users WHERE user_id = ?";
+    $sql = "SELECT username, role_id, room_id FROM tbl_users WHERE user_id = ?";
     $stmt = $conexion->prepare($sql);
     $stmt->execute([$user_id]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
-        die("Error: Usuario no encontrado.");
+        header('Location: usuarios.php?error=2'); // Usuario no encontrado
+        exit();
     }
 
     // Obtener todos los roles
     $sql_roles = "SELECT role_id, role_name FROM tbl_roles";
-    $stmt_roles = $conexion->query($sql_roles);
-    $roles = $stmt_roles->fetchAll(PDO::FETCH_ASSOC);
+    $roles = $conexion->query($sql_roles)->fetchAll(PDO::FETCH_ASSOC);
+
+    // Obtener todas las salas
+    $sql_rooms = "SELECT room_id, name_rooms FROM tbl_rooms";
+    $rooms = $conexion->query($sql_rooms)->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
-    die("Error: " . $e->getMessage());
+    header('Location: usuarios.php?error=3&message=' . urlencode($e->getMessage())); // Redirigir con mensaje de error
+    exit();
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -47,29 +54,42 @@ try {
 <div class="container mt-5">
     <h1 class="text-center">Editar Usuario</h1>
     <form action="update_user.php" method="POST">
+        <!-- ID del Usuario -->
         <input type="hidden" name="user_id" value="<?php echo htmlspecialchars($user_id); ?>">
 
+        <!-- Nombre de Usuario -->
         <div class="form-group">
             <label for="username">Nombre de Usuario:</label>
-            <input type="text" name="username" id="username" class="form-control" 
-                   value="<?php echo htmlspecialchars($user['username']); ?>">
+            <input 
+                type="text" 
+                name="username" 
+                id="username" 
+                class="form-control" 
+                value="<?php echo htmlspecialchars($user['username']); ?>" 
+                required>
         </div>
 
+        <!-- Rol del Usuario -->
         <div class="form-group">
             <label for="role_id">Rol:</label>
-            <select name="role_id" id="role_id" class="form-control">
+            <select name="role_id" id="role_id" class="form-control" required>
                 <?php foreach ($roles as $role): ?>
-                    <option value="<?php echo htmlspecialchars($role['role_id']); ?>" 
-                            <?php echo $role['role_id'] == $user['role_id'] ? 'selected' : ''; ?>>
+                    <option 
+                        value="<?php echo htmlspecialchars($role['role_id']); ?>" 
+                        <?php echo $role['role_id'] == $user['role_id'] ? 'selected' : ''; ?>>
                         <?php echo htmlspecialchars($role['role_name']); ?>
                     </option>
                 <?php endforeach; ?>
             </select>
         </div>
-
+        <!-- Botones de Acción -->
         <button type="submit" class="btn btn-primary">Actualizar</button>
         <a href="usuarios.php" class="btn btn-secondary">Cancelar</a>
     </form>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.10/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

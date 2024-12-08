@@ -16,9 +16,10 @@ try {
 
     // Construir consulta con filtros
     $sql = "
-        SELECT u.user_id, u.username, u.lastname, r.role_name 
+        SELECT u.user_id, u.username, u.lastname, r.role_name, rm.name_rooms
         FROM tbl_users u
         JOIN tbl_roles r ON u.role_id = r.role_id
+        LEFT JOIN tbl_rooms rm ON u.room_id = rm.room_id
         WHERE (u.username LIKE :username OR :username = '')
         AND (r.role_name LIKE :role OR :role = '')
     ";
@@ -37,7 +38,6 @@ try {
 } catch (PDOException $e) {
     die("Error al realizar la consulta: " . $e->getMessage());
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -163,6 +163,7 @@ try {
         foreach ($result as $row) {
             $username = $row['username'] ?? '';
             $role_name = $row['role_name'] ?? '';
+            $name_rooms = $row['name_rooms'] ?? 'Sin sala asignada'; // Cambio: name_rooms
 
             echo "<tr>
                     <td>" . htmlspecialchars($username) . "</td>
