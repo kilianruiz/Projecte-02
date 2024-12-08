@@ -49,17 +49,83 @@ try {
     <meta charset="UTF-8">
     <title>Editar Usuario</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #a67c52; /* Color de fondo principal */
+            color: white;
+        }
+
+        .container {
+            background-color: #6c3e18; /* Fondo más oscuro para la sección */
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1.text-center {
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-control, .form-select {
+            background-color: #a67c52;
+            border: 2px solid #6c3e18;
+            color: white;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: #a67c52;
+            border-color: white;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .form-control[readonly] {
+            background-color: #a67c52; 
+            color: white;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: #6c3e18;
+            border-color: white;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #8A5021;
+            border-color: white;
+        }
+
+        .btn-secondary {
+            background-color: #d1b07b;
+            border-color: #d1b07b;
+            color: #8A5021;
+        }
+
+        .btn-secondary:hover {
+            background-color: #a67c52;
+            border-color: #a67c52;
+        }
+
+        .texto-historial {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
-<div class="container mt-5">
-    <h1 class="text-center">Editar Usuario</h1>
+<div class="container my-5">
+    <h1 class="text-center texto-historial">Editar Usuario</h1>
     <form action="update_user.php" method="POST">
         <!-- ID del Usuario -->
         <input type="hidden" name="user_id" value="<?php echo htmlspecialchars($user_id); ?>">
 
         <!-- Nombre de Usuario -->
         <div class="form-group">
-            <label for="username">Nombre de Usuario:</label>
+            <label for="username" class="texto-historial">Nombre de Usuario:</label>
             <input 
                 type="text" 
                 name="username" 
@@ -71,7 +137,7 @@ try {
 
         <!-- Rol del Usuario -->
         <div class="form-group">
-            <label for="role_id">Rol:</label>
+            <label for="role_id" class="texto-historial">Rol:</label>
             <select name="role_id" id="role_id" class="form-control" required>
                 <?php foreach ($roles as $role): ?>
                     <option 
@@ -82,6 +148,7 @@ try {
                 <?php endforeach; ?>
             </select>
         </div>
+
         <!-- Botones de Acción -->
         <button type="submit" class="btn btn-primary">Actualizar</button>
         <a href="usuarios.php" class="btn btn-secondary">Cancelar</a>

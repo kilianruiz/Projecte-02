@@ -43,7 +43,7 @@ try {
         LEFT JOIN 
             tbl_users ON tbl_occupations.user_id = tbl_users.user_id
         WHERE 
-            tbl_tables.table_id = ?
+            tbl_tables.table_id = ? 
     ";
 
     $stmt = $conexion->prepare($sql);
@@ -114,6 +114,66 @@ try {
     <title>Editar Ocupación</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
+        body {
+            background-color: #a67c52; /* Color de fondo principal */
+            color: white;
+        }
+
+        .container {
+            background-color: #6c3e18; /* Fondo más oscuro para la sección */
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1.text-center {
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-control, .form-select {
+            background-color: #a67c52;
+            border: 2px solid #6c3e18;
+            color: white;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: #a67c52;
+            border-color: white;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .form-control[readonly] {
+            background-color: #a67c52; 
+            color: white;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: #6c3e18;
+            border-color: white;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #8A5021;
+            border-color: white;
+        }
+
+        .btn-secondary {
+            background-color: #d1b07b;
+            border-color: #d1b07b;
+            color: #8A5021;
+        }
+
+        .btn-secondary:hover {
+            background-color: #a67c52;
+            border-color: #a67c52;
+        }
+
         .texto-historial {
             font-weight: bold;
             margin-bottom: 10px;
@@ -128,13 +188,13 @@ try {
             <div class="form-group">
                 <label for="table_number" class="texto-historial">Número de Mesa</label>
                 <input type="text" class="form-control" id="table_number" 
-                       value="<?= htmlspecialchars($occupacion['table_number']) ?>" disabled>
+                       value="<?= htmlspecialchars($occupacion['table_number']) ?>" readonly>
             </div>
             
             <div class="form-group">
                 <label for="room_name" class="texto-historial">Sala</label>
                 <input type="text" class="form-control" id="room_name" 
-                       value="<?= htmlspecialchars($occupacion['room_name']) ?>" disabled>
+                       value="<?= htmlspecialchars($occupacion['room_name']) ?>" readonly>
             </div>
             
             <div class="form-group">

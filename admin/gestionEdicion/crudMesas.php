@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+// Comprobar si el usuario tiene el rol de Administrador
 if ($_SESSION['role_name'] !== 'Administrador') {
     header('Location: ../index.php?error=2');
     exit();
@@ -15,20 +16,64 @@ if (!isset($conexion)) {
 
 // Procesar formulario para añadir una mesa
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["action"] === "add") {
-    $room_id = intval($_POST["room_id"]);
-    $table_number = intval($_POST["table_number"]);
-    $capacity = intval($_POST["capacity"]);
-    $status = $_POST["status"];
+    // Verificar si el campo room_id existe en el array $_POST
+    if (isset($_POST["room_id"])) {
+        // Recoger los datos del formulario
+        $room_id = $_POST["room_id"];
+        $table_number = $_POST["table_number"];
+        $capacity = $_POST["capacity"];
+        $status = $_POST["status"];
 
-    $sql = "INSERT INTO tbl_tables (room_id, table_number, capacity, status) 
-            VALUES (:room_id, :table_number, :capacity, :status)";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':room_id' => $room_id,
-        ':table_number' => $table_number,
-        ':capacity' => $capacity,
-        ':status' => $status
-    ]);
+        // Validar que los campos no estén vacíos y que el número de mesa no sea negativo
+        $errors = [];
+
+        if (empty($room_id)) {
+            $errors[] = "La sala es obligatoria.";
+        }
+        if (empty($table_number)) {
+            $errors[] = "El número de mesa es obligatorio.";
+        } elseif ($table_number < 1) {
+            $errors[] = "El número de mesa no puede ser negativo o cero.";
+        }
+        if (empty($capacity)) {
+            $errors[] = "La capacidad es obligatoria.";
+        }
+        if (empty($status)) {
+            $errors[] = "El estado de la mesa es obligatorio.";
+        }
+
+        // Si hay errores, mostramos una única alerta con todos los errores
+        if (count($errors) > 0) {
+            // Convertir los errores en un solo mensaje
+            $errorMessage = implode("\n", $errors);
+            echo "<script>alert('$errorMessage');</script>";
+        } else {
+            // Verificar si la mesa con ese número ya existe en la sala seleccionada
+            $sqlCheckTable = "SELECT COUNT(*) FROM tbl_tables WHERE room_id = :room_id AND table_number = :table_number";
+            $stmtCheckTable = $conexion->prepare($sqlCheckTable);
+            $stmtCheckTable->execute([':room_id' => $room_id, ':table_number' => $table_number]);
+            $existingTable = $stmtCheckTable->fetchColumn();
+
+            if ($existingTable > 0) {
+                echo "<script>alert('Ya existe una mesa con ese número en esta sala.');</script>";
+            } else {
+                // Insertar la nueva mesa
+                $sql = "INSERT INTO tbl_tables (room_id, table_number, capacity, status) 
+                        VALUES (:room_id, :table_number, :capacity, :status)";
+                $stmt = $conexion->prepare($sql);
+                $stmt->execute([
+                    ':room_id' => $room_id,
+                    ':table_number' => $table_number,
+                    ':capacity' => $capacity,
+                    ':status' => $status
+                ]);
+
+                echo "<script>alert('Mesa añadida exitosamente.');</script>";
+            }
+        }
+    } else {
+        echo "<script>alert('No se seleccionó una sala.');</script>";
+    }
 }
 
 // Construir consulta de filtro para mesas
@@ -139,6 +184,7 @@ $stmtMesas->execute($params);
 <body>
     <div class="top-bar">
         Administración de Mesas
+        <a href="../principalAdmin.php" class="btn btn-primary">Volver</a>
     </div>
     <div class="container">
         <!-- Añadir Mesa -->
@@ -146,7 +192,7 @@ $stmtMesas->execute($params);
             <h3>Añadir Mesa</h3>
             <form class="form-inline" method="POST">
                 <input type="hidden" name="action" value="add">
-                <select name="room_id" class="form-select" required>
+                <select name="room_id" class="form-select">
                     <option value="" disabled selected>Seleccionar Sala</option>
                     <?php while ($sala = $stmtSalas->fetch()) { ?>
                         <option value="<?= htmlspecialchars($sala['room_id']); ?>">
@@ -154,8 +200,8 @@ $stmtMesas->execute($params);
                         </option>
                     <?php } ?>
                 </select>
-                <input type="number" name="table_number" class="form-control" placeholder="Número de Mesa" required>
-                <input type="number" name="capacity" class="form-control" placeholder="Capacidad" required>
+                <input type="number" name="table_number" class="form-control" placeholder="Número de Mesa">
+                <input type="number" name="capacity" class="form-control" placeholder="Capacidad">
                 <select name="status" class="form-select">
                     <option value="free">Libre</option>
                     <option value="occupied">Ocupada</option>
