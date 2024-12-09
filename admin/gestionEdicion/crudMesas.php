@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// Comprobar si el usuario tiene el rol de Administrador
 if ($_SESSION['role_name'] !== 'Administrador') {
     header('Location: ../index.php?error=2');
     exit();
@@ -9,7 +8,6 @@ if ($_SESSION['role_name'] !== 'Administrador') {
 
 include_once('../../conexion/conexion.php');
 
-// Verificar que $pdo está definido
 if (!isset($conexion)) {
     die("Error: La conexión a la base de datos no se estableció correctamente.");
 }
@@ -99,7 +97,7 @@ $stmtSalas = $conexion->query($sqlSalas);
 
 // Consultar mesas
 $sqlMesas = "
-    SELECT tbl_tables.table_number, tbl_rooms.name_rooms AS room_name, tbl_tables.capacity, tbl_tables.status 
+    SELECT tbl_tables.table_id, tbl_tables.table_number, tbl_rooms.name_rooms AS room_name, tbl_tables.capacity, tbl_tables.status 
     FROM tbl_tables 
     INNER JOIN tbl_rooms ON tbl_tables.room_id = tbl_rooms.room_id
     $whereSql
@@ -254,9 +252,20 @@ $stmtMesas->execute($params);
                                 <td><?= htmlspecialchars($mesa['capacity']); ?></td>
                                 <td><?= $mesa['status'] === 'free' ? 'Libre' : 'Ocupada'; ?></td>
                                 <td>
-                                    <a href="#" class="btn btn-warning"><i class="fas fa-edit"></i> Editar</a>
-                                    <a href="#" class="btn btn-danger"><i class="fas fa-trash"></i> Eliminar</a>
+                                    <!-- Contenedor para alinear los botones horizontalmente -->
+                                    <div style="display: flex; gap: 10px; justify-content: center;">
+                                        <!-- Botón de editar, redirige a la página de edición -->
+                                        <a href="editarMesa.php?table_id=<?= htmlspecialchars($mesa['table_id']); ?>" class="btn btn-warning">
+                                            <i class="fas fa-edit"></i> Editar
+                                        </a>
+                                        <!-- Formulario para eliminar mesa -->
+                                        <form action="eliminarMesa.php" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar esta mesa?');">
+                                            <input type="hidden" name="table_id" value="<?= htmlspecialchars($mesa['table_id']); ?>">
+                                            <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> Eliminar</button>
+                                        </form>
+                                    </div>
                                 </td>
+
                             </tr>
                         <?php } 
                     } else { ?>
