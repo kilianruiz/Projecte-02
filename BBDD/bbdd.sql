@@ -69,6 +69,18 @@ CREATE TABLE tbl_group_tables (
     FOREIGN KEY (table_id) REFERENCES tbl_tables(table_id) ON DELETE CASCADE
 );
 
+-- Tabla para controlar el stock de sillas
+CREATE TABLE tbl_chairs_stock (
+    stock_id INT PRIMARY KEY AUTO_INCREMENT,
+    total_chairs INT NOT NULL DEFAULT 350, -- Total de sillas disponibles
+    assigned_chairs INT NOT NULL DEFAULT 306, -- Sillas asignadas actualmente
+    reserved_chairs INT NOT NULL DEFAULT 44 -- Sillas reservadas para uso extra
+);
+
+-- Registro inicial del stock de sillas
+INSERT INTO tbl_chairs_stock (assigned_chairs, reserved_chairs)
+VALUES (306, 44);
+
 -- Insertar roles en la tabla de roles
 INSERT INTO tbl_roles (role_name) VALUES ('Camarero'), ('Administrador');
 
