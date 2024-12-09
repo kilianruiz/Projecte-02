@@ -12,68 +12,6 @@ if (!isset($conexion)) {
     die("Error: La conexión a la base de datos no se estableció correctamente.");
 }
 
-// Procesar formulario para añadir una mesa
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["action"] === "add") {
-    // Verificar si el campo room_id existe en el array $_POST
-    if (isset($_POST["room_id"])) {
-        // Recoger los datos del formulario
-        $room_id = $_POST["room_id"];
-        $table_number = $_POST["table_number"];
-        $capacity = $_POST["capacity"];
-        $status = $_POST["status"];
-
-        // Validar que los campos no estén vacíos y que el número de mesa no sea negativo
-        $errors = [];
-
-        if (empty($room_id)) {
-            $errors[] = "La sala es obligatoria.";
-        }
-        if (empty($table_number)) {
-            $errors[] = "El número de mesa es obligatorio.";
-        } elseif ($table_number < 1) {
-            $errors[] = "El número de mesa no puede ser negativo o cero.";
-        }
-        if (empty($capacity)) {
-            $errors[] = "La capacidad es obligatoria.";
-        }
-        if (empty($status)) {
-            $errors[] = "El estado de la mesa es obligatorio.";
-        }
-
-        // Si hay errores, mostramos una única alerta con todos los errores
-        if (count($errors) > 0) {
-            // Convertir los errores en un solo mensaje
-            $errorMessage = implode("\n", $errors);
-            echo "<script>alert('$errorMessage');</script>";
-        } else {
-            // Verificar si la mesa con ese número ya existe en la sala seleccionada
-            $sqlCheckTable = "SELECT COUNT(*) FROM tbl_tables WHERE room_id = :room_id AND table_number = :table_number";
-            $stmtCheckTable = $conexion->prepare($sqlCheckTable);
-            $stmtCheckTable->execute([':room_id' => $room_id, ':table_number' => $table_number]);
-            $existingTable = $stmtCheckTable->fetchColumn();
-
-            if ($existingTable > 0) {
-                echo "<script>alert('Ya existe una mesa con ese número en esta sala.');</script>";
-            } else {
-                // Insertar la nueva mesa
-                $sql = "INSERT INTO tbl_tables (room_id, table_number, capacity, status) 
-                        VALUES (:room_id, :table_number, :capacity, :status)";
-                $stmt = $conexion->prepare($sql);
-                $stmt->execute([
-                    ':room_id' => $room_id,
-                    ':table_number' => $table_number,
-                    ':capacity' => $capacity,
-                    ':status' => $status
-                ]);
-
-                echo "<script>alert('Mesa añadida exitosamente.');</script>";
-            }
-        }
-    } else {
-        echo "<script>alert('No se seleccionó una sala.');</script>";
-    }
-}
-
 // Construir consulta de filtro para mesas
 $params = [];
 $whereSql = '';
@@ -95,9 +33,14 @@ $whereSql = $whereSql ? "WHERE " . $whereSql : "";
 $sqlSalas = "SELECT room_id, name_rooms FROM tbl_rooms";
 $stmtSalas = $conexion->query($sqlSalas);
 
-// Consultar mesas
+// Consultar mesas (con la URL de la imagen de la sala)
 $sqlMesas = "
-    SELECT tbl_tables.table_id, tbl_tables.table_number, tbl_rooms.name_rooms AS room_name, tbl_tables.capacity, tbl_tables.status 
+    SELECT tbl_tables.table_id, 
+           tbl_tables.table_number, 
+           tbl_rooms.name_rooms AS room_name, 
+           tbl_tables.capacity, 
+           tbl_tables.status, 
+           tbl_rooms.image_url  -- Agregamos la URL de la imagen
     FROM tbl_tables 
     INNER JOIN tbl_rooms ON tbl_tables.room_id = tbl_rooms.room_id
     $whereSql
@@ -131,9 +74,9 @@ $stmtMesas->execute($params);
         .container {
             padding: 30px;
             margin-top: 20px;
-            background-color: #8A5021; /* Color marrón fuerte */
+            background-color: #8A5021;
             border-radius: 10px;
-            color: white; /* Para el texto en el contenedor */
+            color: white;
         }
         h1, h3 {
             text-align: center;
@@ -146,36 +89,41 @@ $stmtMesas->execute($params);
             gap: 10px;
         }
         .btn-primary, .btn-warning {
-            background-color: #8A5021; /* Fondo marrón para el botón de añadir */
-            color: white; /* Texto blanco */
-            border: 2px solid white; /* Borde blanco */
+            background-color: #8A5021;
+            color: white;
+            border: 2px solid white;
         }
         .btn-primary:hover, .btn-warning:hover {
-            background-color: #6c3e18; /* Color marrón más oscuro cuando se pasa el mouse */
-            border-color: white; /* Borde blanco en hover */
+            background-color: #6c3e18;
+            border-color: white;
         }
         .table {
             margin-top: 30px;
             border-radius: 8px;
-            border: 3px solid #8A5021; /* Bordes marrones más gruesos */
+            border: 3px solid #8A5021;
             overflow: hidden;
         }
         .table th, .table td {
             text-align: center;
             vertical-align: middle;
-            color: #8A5021; /* Letras marrones dentro de la tabla */
-            border: 3px solid #8A5021; /* Bordes marrones más gruesos */
+            color: #8A5021;
+            border: 3px solid #8A5021;
         }
         .table thead {
-            background-color: #6c3e18; /* Color de fondo de la cabecera de la tabla */
+            background-color: #6c3e18;
             color: white;
         }
         .table tbody {
-            background-color: #8A5021; /* Fondo de la tabla marrón fuerte */
+            background-color: #8A5021;
         }
         .table tbody tr:hover {
             background-color: #6c3e18;
             color: white;
+        }
+        .table img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
         }
     </style>
 </head>
@@ -185,10 +133,17 @@ $stmtMesas->execute($params);
         <a href="../principalAdmin.php" class="btn btn-primary">Volver</a>
     </div>
     <div class="container">
+        <!-- Mensajes de éxito o error -->
+        <?php if (isset($_GET['success'])) { ?>
+            <div class="alert alert-success">Mesa añadida exitosamente.</div>
+        <?php } elseif (isset($_GET['errors'])) { ?>
+            <div class="alert alert-danger"><?= nl2br(htmlspecialchars($_GET['errors'])); ?></div>
+        <?php } ?>
+
         <!-- Añadir Mesa -->
         <div>
             <h3>Añadir Mesa</h3>
-            <form class="form-inline" method="POST">
+            <form class="form-inline" method="POST" action="crearMesa.php">
                 <input type="hidden" name="action" value="add">
                 <select name="room_id" class="form-select">
                     <option value="" disabled selected>Seleccionar Sala</option>
@@ -223,7 +178,7 @@ $stmtMesas->execute($params);
                     <?php } ?>
                 </select>
                 <select name="estado" class="form-select">
-                    <option value="">Todos</option>
+                    <option value="">Todos los estados</option>
                     <option value="free">Libre</option>
                     <option value="occupied">Ocupada</option>
                 </select>
@@ -240,6 +195,7 @@ $stmtMesas->execute($params);
                         <th>Sala</th>
                         <th>Capacidad</th>
                         <th>Estado</th>
+                        <th>Imagen Sala</th> <!-- Columna para la imagen de la sala -->
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -252,24 +208,28 @@ $stmtMesas->execute($params);
                                 <td><?= htmlspecialchars($mesa['capacity']); ?></td>
                                 <td><?= $mesa['status'] === 'free' ? 'Libre' : 'Ocupada'; ?></td>
                                 <td>
-                                    <!-- Contenedor para alinear los botones horizontalmente -->
+                                    <!-- Mostrar la imagen de la sala -->
+                                    <?php if (!empty($mesa['image_url'])) { ?>
+                                        <img src="<?= htmlspecialchars($mesa['image_url']); ?>" alt="Imagen de la sala">
+                                    <?php } else { ?>
+                                        <span>No disponible</span>
+                                    <?php } ?>
+                                </td>
+                                <td>
                                     <div style="display: flex; gap: 10px; justify-content: center;">
-                                        <!-- Botón de editar, redirige a la página de edición -->
                                         <a href="editarMesa.php?table_id=<?= htmlspecialchars($mesa['table_id']); ?>" class="btn btn-warning">
                                             <i class="fas fa-edit"></i> Editar
                                         </a>
-                                        <!-- Formulario para eliminar mesa -->
-                                        <form action="eliminarMesa.php" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar esta mesa?');">
+                                        <form action="eliminarMesa.php" method="POST">
                                             <input type="hidden" name="table_id" value="<?= htmlspecialchars($mesa['table_id']); ?>">
                                             <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> Eliminar</button>
                                         </form>
                                     </div>
                                 </td>
-
                             </tr>
                         <?php } 
                     } else { ?>
-                        <tr><td colspan="5">No se encontraron mesas.</td></tr>
+                        <tr><td colspan="6">No se encontraron mesas.</td></tr>
                     <?php } ?>
                 </tbody>
             </table>
@@ -277,5 +237,29 @@ $stmtMesas->execute($params);
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.querySelectorAll('form[action="eliminarMesa.php"]').forEach((form) => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault(); // Evita el envío inmediato del formulario
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Esta acción eliminará la mesa definitivamente.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+</script>
+
 </body>
 </html>

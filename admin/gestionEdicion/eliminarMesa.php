@@ -33,22 +33,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["table_id"])) {
         $mesa = $stmtCheck->fetch(PDO::FETCH_ASSOC);
         $capacity = $mesa['capacity'];
 
-        // Eliminar ocupaciones relacionadas
-        $sqlDeleteOccupations = "DELETE FROM tbl_occupations WHERE table_id = :table_id";
-        $stmtDeleteOccupations = $conexion->prepare($sqlDeleteOccupations);
-        $stmtDeleteOccupations->execute([':table_id' => $table_id]);
-
-        // Actualizar el stock de sillas
+        // Actualizar el stock de sillas (aumentar el stock de sillas en el almacén)
         $sqlUpdateChairs = "
             UPDATE tbl_chairs_stock 
-            SET assigned_chairs = assigned_chairs - :capacity
-            WHERE assigned_chairs >= :capacity";
+            SET chairs_in_warehouse = chairs_in_warehouse + :capacity";
         $stmtUpdateChairs = $conexion->prepare($sqlUpdateChairs);
         $stmtUpdateChairs->execute([':capacity' => $capacity]);
-
-        if ($stmtUpdateChairs->rowCount() === 0) {
-            throw new Exception('No hay suficientes sillas asignadas para esta operación.');
-        }
 
         // Eliminar la mesa
         $sqlDeleteTable = "DELETE FROM tbl_tables WHERE table_id = :table_id";
@@ -68,3 +58,4 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["table_id"])) {
     header('Location: crudMesas.php?error=solicitud_invalida');
     exit();
 }
+?>
