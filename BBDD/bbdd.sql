@@ -1,4 +1,4 @@
--- SQLBook: Code
+-- Crear la base de datos
 CREATE DATABASE db_mokadictos;
 
 USE db_mokadictos;
@@ -15,30 +15,29 @@ CREATE TABLE tbl_users (
     username VARCHAR(50) UNIQUE NOT NULL,
     pwd VARCHAR(255) NOT NULL,
     role_id INT,
-    FOREIGN KEY (role_id) REFERENCES tbl_roles(role_id) ON DELETE SET NULL
+    lastname VARCHAR(50),
+    room_id INT,
+    FOREIGN KEY (role_id) REFERENCES tbl_roles(role_id) ON DELETE SET NULL,
+    FOREIGN KEY (room_id) REFERENCES tbl_rooms(room_id) ON DELETE SET NULL
 );
 
-ALTER TABLE tbl_users ADD lastname VARCHAR(50);
-
-
--- Tabla de Salas
+-- Tabla de Salas (ahora con columna para imagen)
 CREATE TABLE tbl_rooms (
     room_id INT PRIMARY KEY AUTO_INCREMENT,
     name_rooms VARCHAR(50) NOT NULL,
     capacity INT NOT NULL,
-    description TEXT
+    description TEXT,
+    image_url VARCHAR(255)  -- Nueva columna para la URL de la imagen
 );
 
 -- Tabla de Mesas
 CREATE TABLE tbl_tables (
     table_id INT PRIMARY KEY AUTO_INCREMENT,
     room_id INT NOT NULL,
-    current_room_id INT,
     table_number INT NOT NULL,
     capacity INT NOT NULL,
-    status ENUM('free', 'occupied') DEFAULT 'free',
-    FOREIGN KEY (room_id) REFERENCES tbl_rooms(room_id) ON DELETE CASCADE,
-    FOREIGN KEY (current_room_id) REFERENCES tbl_rooms(room_id) ON DELETE SET NULL
+    status ENUM('free', 'occupied') DEFAULT 'free',  -- Estado de mesa (ocupada o libre)
+    FOREIGN KEY (room_id) REFERENCES tbl_rooms(room_id) ON DELETE CASCADE
 );
 
 -- Tabla de Ocupaciones (Historial de uso de mesas)
@@ -72,117 +71,129 @@ CREATE TABLE tbl_group_tables (
 -- Tabla para controlar el stock de sillas
 CREATE TABLE tbl_chairs_stock (
     stock_id INT PRIMARY KEY AUTO_INCREMENT,
-    total_chairs INT NOT NULL DEFAULT 350, -- Total de sillas disponibles
-    assigned_chairs INT NOT NULL DEFAULT 306, -- Sillas asignadas actualmente
-    reserved_chairs INT NOT NULL DEFAULT 44 -- Sillas reservadas para uso extra
+    chairs_in_warehouse INT NOT NULL DEFAULT 44  -- Sillas en el almacén
 );
 
--- Registro inicial del stock de sillas
-INSERT INTO tbl_chairs_stock (assigned_chairs, reserved_chairs)
-VALUES (306, 44);
+-- Tabla para controlar el stock de mesas
+CREATE TABLE tbl_tables_stock (
+    stock_id INT PRIMARY KEY AUTO_INCREMENT,
+    tables_in_warehouse INT NOT NULL DEFAULT 10  -- Mesas en el almacén
+);
+
+-- Registro inicial del stock de mesas (cambiado a 10)
+INSERT INTO tbl_tables_stock (tables_in_warehouse)
+VALUES (10);
+
+-- Registro inicial del stock de sillas (cambiado a 44)
+INSERT INTO tbl_chairs_stock (chairs_in_warehouse)
+VALUES (44);
 
 -- Insertar roles en la tabla de roles
 INSERT INTO tbl_roles (role_name) VALUES ('Camarero'), ('Administrador');
 
--- Insertar salas en la tabla de salas
-INSERT INTO tbl_rooms (name, capacity, description) 
+-- Insertar salas en la tabla de salas con imágenes asociadas
+INSERT INTO tbl_rooms (name_rooms, capacity, description, image_url) 
 VALUES 
-    ('Terraza 1', 5, 'Primera terraza exterior del restaurante'),
-    ('Terraza 2', 10, 'Segunda terraza con vistas al parque'),
-    ('Terraza 3', 5, 'Tercera terraza con ambiente acogedor'),
-    ('Salón 1', 15, 'Salón principal del restaurante'),
-    ('Salón 2', 20, 'Salón secundario con capacidad amplia'),
-    ('Sala Privada 1', 4, 'Sala privada para eventos pequeños'),
-    ('Sala Privada 2', 1, 'Sala privada con ambiente íntimo'),
-    ('Sala Privada 3', 2, 'Sala privada para reuniones exclusivas'),
-    ('Sala Privada 4', 8, 'Sala privada de tamaño mediano');
+    ('Terraza 1', 5, 'Primera terraza exterior del restaurante', 'images/terraza1.jpg'),
+    ('Terraza 2', 10, 'Segunda terraza con vistas al parque', 'images/terraza2.jpg'),
+    ('Terraza 3', 5, 'Tercera terraza con ambiente acogedor', 'images/terraza3.jpg'),
+    ('Salón 1', 15, 'Salón principal del restaurante', 'images/salon1.jpg'),
+    ('Salón 2', 20, 'Salón secundario con capacidad amplia', 'images/salon2.jpg'),
+    ('Sala Privada 1', 4, 'Sala privada para eventos pequeños', 'images/sala_privada1.jpg'),
+    ('Sala Privada 2', 1, 'Sala privada con ambiente íntimo', 'images/sala_privada2.jpg'),
+    ('Sala Privada 3', 2, 'Sala privada para reuniones exclusivas', 'images/sala_privada3.jpg'),
+    ('Sala Privada 4', 8, 'Sala privada de tamaño mediano', 'images/sala_privada4.jpg');
 
--- Insertar mesas en la tabla de mesas
-INSERT INTO tbl_tables (room_id, current_room_id, table_number, capacity, status) VALUES
+-- Insertar mesas en la tabla de mesas (70 ocupadas, 10 libres)
+INSERT INTO tbl_tables (room_id, table_number, capacity, status) VALUES
 -- Terraza 1
-(1, NULL, 1, 4, 'free'),
-(1, NULL, 2, 4, 'free'),
-(1, NULL, 3, 4, 'free'),
-(1, NULL, 4, 4, 'free'),
-(1, NULL, 5, 4, 'free'),
+(1, 1, 4, 'occupied'),
+(1, 2, 4, 'occupied'),
+(1, 3, 4, 'occupied'),
+(1, 4, 4, 'occupied'),
+(1, 5, 4, 'occupied'),
 
 -- Terraza 2
-(2, NULL, 1, 4, 'free'),
-(2, NULL, 2, 4, 'free'),
-(2, NULL, 3, 4, 'free'),
-(2, NULL, 4, 4, 'free'),
-(2, NULL, 5, 4, 'free'),
-(2, NULL, 6, 4, 'free'),
-(2, NULL, 7, 4, 'free'),
-(2, NULL, 8, 4, 'free'),
-(2, NULL, 9, 4, 'free'),
-(2, NULL, 10, 4, 'free'),
+(2, 1, 4, 'occupied'),
+(2, 2, 4, 'occupied'),
+(2, 3, 4, 'occupied'),
+(2, 4, 4, 'occupied'),
+(2, 5, 4, 'occupied'),
+(2, 6, 4, 'occupied'),
+(2, 7, 4, 'occupied'),
+(2, 8, 4, 'occupied'),
+(2, 9, 4, 'occupied'),
+(2, 10, 4, 'occupied'),
 
 -- Terraza 3
-(3, NULL, 1, 4, 'free'),
-(3, NULL, 2, 4, 'free'),
-(3, NULL, 3, 4, 'free'),
-(3, NULL, 4, 4, 'free'),
-(3, NULL, 5, 4, 'free'),
+(3, 1, 4, 'occupied'),
+(3, 2, 4, 'occupied'),
+(3, 3, 4, 'occupied'),
+(3, 4, 4, 'occupied'),
+(3, 5, 4, 'occupied'),
 
 -- Salon 1
-(4, NULL, 1, 6, 'free'),
-(4, NULL, 2, 6, 'free'),
-(4, NULL, 3, 6, 'free'),
-(4, NULL, 4, 6, 'free'),
-(4, NULL, 5, 6, 'free'),
-(4, NULL, 6, 6, 'free'),
-(4, NULL, 7, 6, 'free'),
-(4, NULL, 8, 6, 'free'),
-(4, NULL, 9, 6, 'free'),
-(4, NULL, 10, 6, 'free'),
+(4, 1, 6, 'occupied'),
+(4, 2, 6, 'occupied'),
+(4, 3, 6, 'occupied'),
+(4, 4, 6, 'occupied'),
+(4, 5, 6, 'occupied'),
+(4, 6, 6, 'occupied'),
+(4, 7, 6, 'occupied'),
+(4, 8, 6, 'occupied'),
+(4, 9, 6, 'occupied'),
+(4, 10, 6, 'occupied'),
 
 -- Salon 2
-(5, NULL, 1, 8, 'free'),
-(5, NULL, 2, 8, 'free'),
-(5, NULL, 3, 8, 'free'),
-(5, NULL, 4, 8, 'free'),
-(5, NULL, 5, 8, 'free'),
-(5, NULL, 6, 8, 'free'),
-(5, NULL, 7, 8, 'free'),
-(5, NULL, 8, 8, 'free'),
-(5, NULL, 9, 8, 'free'),
-(5, NULL, 10, 8, 'free'),
-(5, NULL, 11, 8, 'free'),
-(5, NULL, 12, 8, 'free'),
-(5, NULL, 13, 8, 'free'),
-(5, NULL, 14, 8, 'free'),
-(5, NULL, 15, 8, 'free'),
+(5, 1, 8, 'occupied'),
+(5, 2, 8, 'occupied'),
+(5, 3, 8, 'occupied'),
+(5, 4, 8, 'occupied'),
+(5, 5, 8, 'occupied'),
+(5, 6, 8, 'occupied'),
+(5, 7, 8, 'occupied'),
+(5, 8, 8, 'occupied'),
+(5, 9, 8, 'occupied'),
+(5, 10, 8, 'occupied'),
+(5, 11, 8, 'occupied'),
+(5, 12, 8, 'occupied'),
+(5, 13, 8, 'occupied'),
+(5, 14, 8, 'occupied'),
+(5, 15, 8, 'occupied'),
 
 -- Sala Privada 1
-(6, NULL, 1, 2, 'free'),
-(6, NULL, 2, 2, 'free'),
-(6, NULL, 3, 2, 'free'),
-(6, NULL, 4, 2, 'free'),
+(6, 1, 2, 'free'),
+(6, 2, 2, 'free'),
+(6, 3, 2, 'free'),
+(6, 4, 2, 'free'),
 
 -- Sala Privada 2
-(7, NULL, 1, 2, 'free'),
+(7, 1, 2, 'free'),
 
 -- Sala Privada 3
-(8, NULL, 1, 2, 'free'),
-(8, NULL, 2, 2, 'free'),
+(8, 1, 2, 'free'),
+(8, 2, 2, 'free'),
 
 -- Sala Privada 4
-(9, NULL, 1, 4, 'free'),
-(9, NULL, 2, 4, 'free'),
-(9, NULL, 3, 4, 'free'),
-(9, NULL, 4, 4, 'free'),
-(9, NULL, 5, 4, 'free'),
-(9, NULL, 6, 4, 'free'),
-(9, NULL, 7, 4, 'free'),
-(9, NULL, 8, 4, 'free');
-
-
+(9, 1, 4, 'free'),
+(9, 2, 4, 'free'),
+(9, 3, 4, 'free'),
+(9, 4, 4, 'free'),
+(9, 5, 4, 'free'),
+(9, 6, 4, 'free'),
+(9, 7, 4, 'free'),
+(9, 8, 4, 'free');
 
 -- Insertar un usuario llamado 'pau blanch' con el rol de Administrador
 INSERT INTO tbl_users (username, lastname, pwd, role_id)
 VALUES ('pau', 'blanch', SHA2('qweQWE123', 256), 
     (SELECT role_id FROM tbl_roles WHERE role_name = 'Administrador'));
 
-ALTER TABLE tbl_users ADD room_id INT;
-ALTER TABLE tbl_users ADD CONSTRAINT fk_room FOREIGN KEY (room_id) REFERENCES tbl_rooms(room_id) ON DELETE SET NULL;
+-- Verificación de los registros
+SELECT * FROM tbl_chairs_stock;
+SELECT * FROM tbl_tables_stock;
+SELECT table_id, status FROM tbl_tables ORDER BY table_id;
+
+UPDATE tbl_chairs_stock 
+SET chairs_in_warehouse = 44 
+WHERE stock_id = 1;

@@ -4,9 +4,9 @@ include_once('../conexion/conexion.php');
 
 try {
     // Datos del usuario a insertar
-    $username = 'Pau';
+    $username = 'Pol';
     $password = 'qweQWE123';
-    $role_id = 1;
+    $role_id = 2;
 
     // Hash de la contraseña
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
