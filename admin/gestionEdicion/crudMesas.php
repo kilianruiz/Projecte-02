@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+// Verificar si el usuario es administrador
 if ($_SESSION['role_name'] !== 'Administrador') {
     header('Location: ../index.php?error=2');
     exit();
@@ -8,6 +9,7 @@ if ($_SESSION['role_name'] !== 'Administrador') {
 
 include_once('../../conexion/conexion.php');
 
+// Verificar si la conexión a la base de datos fue exitosa
 if (!isset($conexion)) {
     die("Error: La conexión a la base de datos no se estableció correctamente.");
 }
@@ -15,7 +17,7 @@ if (!isset($conexion)) {
 // Configuración de paginación
 $recordsPerPage = isset($_POST['recordsPerPage']) ? intval($_POST['recordsPerPage']) : (isset($_SESSION['recordsPerPage']) ? intval($_SESSION['recordsPerPage']) : 10);
 $_SESSION['recordsPerPage'] = $recordsPerPage; // Guardar en sesión
-$currentPage = isset($_GET['page']) ? intval($_GET['page']) : 1;
+$currentPage = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;  // Verifica que la página sea un número mayor a 1
 
 // Consultar salas
 $sqlSalas = "SELECT room_id, name_rooms FROM tbl_rooms";
@@ -39,7 +41,7 @@ if (!empty($_POST['estado'])) {
 $whereSql = ltrim($whereSql, " AND");
 $whereSql = $whereSql ? "WHERE " . $whereSql : "";
 
-// Consultar total de mesas
+// Consultar el total de mesas con los filtros aplicados
 $sqlCount = "
     SELECT COUNT(*) 
     FROM tbl_tables 
@@ -51,7 +53,7 @@ $stmtCount->execute($params);
 $totalRecords = $stmtCount->fetchColumn();
 $totalPages = ceil($totalRecords / $recordsPerPage);
 
-// Consultar mesas (con límite para paginación)
+// Consultar mesas con los filtros aplicados y paginación
 $offset = ($currentPage - 1) * $recordsPerPage;
 
 $sqlMesas = "
@@ -60,20 +62,19 @@ $sqlMesas = "
            tbl_rooms.name_rooms AS room_name, 
            tbl_tables.capacity, 
            tbl_tables.status, 
-           tbl_rooms.image_url
+           tbl_tables.image_path
     FROM tbl_tables 
     INNER JOIN tbl_rooms ON tbl_tables.room_id = tbl_rooms.room_id
     $whereSql
     LIMIT :limit OFFSET :offset
 ";
-
 $stmtMesas = $conexion->prepare($sqlMesas);
 
-// Asegúrate de que los valores de :limit y :offset son enteros
+// Vincular los parámetros para paginación
 $stmtMesas->bindParam(':limit', $recordsPerPage, PDO::PARAM_INT);
 $stmtMesas->bindParam(':offset', $offset, PDO::PARAM_INT);
 
-// Solo vinculamos los parámetros si los valores están presentes
+// Vincular otros parámetros de filtro si existen
 foreach ($params as $key => $value) {
     $stmtMesas->bindValue($key, $value);
 }
@@ -89,7 +90,6 @@ $stmtMesas->execute();
     <title>Administración de Mesas - Restaurante</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-
     <style>
         body { background-color: #a67c52; }
         .top-bar { background-color: #8A5021; padding: 20px; margin-bottom: 20px; text-align: center; color: white; font-size: 1.5rem; font-weight: bold; }
@@ -103,7 +103,7 @@ $stmtMesas->execute();
         .table thead { background-color: #6c3e18; color: white; }
         .table tbody { background-color: #8A5021; }
         .table tbody tr:hover { background-color: #6c3e18; color: white; }
-        .table img { width: 50px; height: 50px; object-fit: cover; }
+        .table img { width: 100px; height: 70px; }
 
         /* Estilos para la paginación */
         .pagination {
@@ -247,28 +247,40 @@ $stmtMesas->execute();
                                 <td><?= htmlspecialchars($mesa['capacity']); ?></td>
                                 <td><?= $mesa['status'] === 'free' ? 'Libre' : 'Ocupada'; ?></td>
                                 <td>
-                                    <?php if (!empty($mesa['image_url'])) { ?>
-                                        <img src="<?= htmlspecialchars($mesa['image_url']); ?>" alt="Imagen Sala">
+                                    <?php if (!empty($mesa['image_path'])) { ?>
+                                        <img src="../../<?= htmlspecialchars($mesa['image_path']); ?>" alt="Mesa" class="mt-3 img-thumbnail" style="max-width: 400px; max-height: 300px; object-fit: cover;">
+                                        <?php } else { ?>
+                                        Sin Imagen
                                     <?php } ?>
                                 </td>
                                 <td>
+                                    <!-- Botón de edición -->
                                     <a href="editarMesa.php?id=<?= $mesa['table_id']; ?>" class="btn btn-warning">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="eliminarMesa.php?id=<?= $mesa['table_id']; ?>" class="btn btn-danger">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
+
+                                    <!-- Formulario de eliminación (en lugar de solo un enlace) -->
+                                    <form action="eliminarMesa.php" method="POST" style="display:inline;">
+                                        <input type="hidden" name="table_id" value="<?= $mesa['table_id']; ?>">
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar esta mesa?');">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </td>
+
                             </tr>
                         <?php } ?>
                     <?php } else { ?>
-                        <tr><td colspan="6">No hay mesas disponibles.</td></tr>
+                        <tr>
+                            <td colspan="6">No se encontraron mesas.</td>
+                        </tr>
                     <?php } ?>
                 </tbody>
             </table>
+        </div>
 
-            <!-- Paginación -->
-            <nav aria-label="Page navigation example" class="mt-4">
+                    <!-- Paginación -->
+                    <nav aria-label="Page navigation example" class="mt-4">
                 <ul class="pagination justify-content-center">
                     <!-- Botón Anterior -->
                     <li class="page-item <?= ($currentPage <= 1) ? 'disabled' : ''; ?>">
@@ -298,7 +310,6 @@ $stmtMesas->execute();
                 </ul>
             </nav>
 
-        </div>
     </div>
 </body>
 </html>
