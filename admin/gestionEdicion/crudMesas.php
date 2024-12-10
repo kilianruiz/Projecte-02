@@ -12,6 +12,15 @@ if (!isset($conexion)) {
     die("Error: La conexión a la base de datos no se estableció correctamente.");
 }
 
+// Configuración de paginación
+$recordsPerPage = isset($_POST['recordsPerPage']) ? intval($_POST['recordsPerPage']) : (isset($_SESSION['recordsPerPage']) ? intval($_SESSION['recordsPerPage']) : 10);
+$_SESSION['recordsPerPage'] = $recordsPerPage; // Guardar en sesión
+$currentPage = isset($_GET['page']) ? intval($_GET['page']) : 1;
+
+// Consultar salas
+$sqlSalas = "SELECT room_id, name_rooms FROM tbl_rooms";
+$stmtSalas = $conexion->query($sqlSalas);
+
 // Construir consulta de filtro para mesas
 $params = [];
 $whereSql = '';
@@ -20,6 +29,7 @@ if (!empty($_POST['sala'])) {
     $whereSql .= " AND tbl_tables.room_id = :room_id";
     $params[':room_id'] = intval($_POST['sala']);
 }
+
 if (!empty($_POST['estado'])) {
     $whereSql .= " AND tbl_tables.status = :status";
     $params[':status'] = $_POST['estado'];
@@ -29,24 +39,46 @@ if (!empty($_POST['estado'])) {
 $whereSql = ltrim($whereSql, " AND");
 $whereSql = $whereSql ? "WHERE " . $whereSql : "";
 
-// Consultar salas
-$sqlSalas = "SELECT room_id, name_rooms FROM tbl_rooms";
-$stmtSalas = $conexion->query($sqlSalas);
+// Consultar total de mesas
+$sqlCount = "
+    SELECT COUNT(*) 
+    FROM tbl_tables 
+    INNER JOIN tbl_rooms ON tbl_tables.room_id = tbl_rooms.room_id 
+    $whereSql
+";
+$stmtCount = $conexion->prepare($sqlCount);
+$stmtCount->execute($params);
+$totalRecords = $stmtCount->fetchColumn();
+$totalPages = ceil($totalRecords / $recordsPerPage);
 
-// Consultar mesas (con la URL de la imagen de la sala)
+// Consultar mesas (con límite para paginación)
+$offset = ($currentPage - 1) * $recordsPerPage;
+
 $sqlMesas = "
     SELECT tbl_tables.table_id, 
            tbl_tables.table_number, 
            tbl_rooms.name_rooms AS room_name, 
            tbl_tables.capacity, 
            tbl_tables.status, 
-           tbl_rooms.image_url  -- Agregamos la URL de la imagen
+           tbl_rooms.image_url
     FROM tbl_tables 
     INNER JOIN tbl_rooms ON tbl_tables.room_id = tbl_rooms.room_id
     $whereSql
+    LIMIT :limit OFFSET :offset
 ";
+
 $stmtMesas = $conexion->prepare($sqlMesas);
-$stmtMesas->execute($params);
+
+// Asegúrate de que los valores de :limit y :offset son enteros
+$stmtMesas->bindParam(':limit', $recordsPerPage, PDO::PARAM_INT);
+$stmtMesas->bindParam(':offset', $offset, PDO::PARAM_INT);
+
+// Solo vinculamos los parámetros si los valores están presentes
+foreach ($params as $key => $value) {
+    $stmtMesas->bindValue($key, $value);
+}
+
+$stmtMesas->execute();
 ?>
 
 <!DOCTYPE html>
@@ -59,72 +91,69 @@ $stmtMesas->execute($params);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 
     <style>
-        body {
-            background-color: #a67c52;
-        }
-        .top-bar {
-            background-color: #8A5021;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-            color: white;
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-        .container {
-            padding: 30px;
+        body { background-color: #a67c52; }
+        .top-bar { background-color: #8A5021; padding: 20px; margin-bottom: 20px; text-align: center; color: white; font-size: 1.5rem; font-weight: bold; }
+        .container { padding: 30px; margin-top: 20px; background-color: #8A5021; border-radius: 10px; color: white; }
+        h1, h3 { text-align: center; }
+        .form-inline { display: flex; align-items: center; justify-content: flex-start; flex-wrap: nowrap; gap: 10px; }
+        .btn-primary, .btn-warning, .btn-danger { background-color: #6c3e18; color: white; border: 2px solid white; }
+        .btn-primary:hover, .btn-warning:hover, .btn-danger:hover { background-color: #8A5021; border-color: white; }
+        .table { margin-top: 30px; border-radius: 8px; border: 3px solid #8A5021; overflow: hidden; }
+        .table th, .table td { text-align: center; vertical-align: middle; color: #8A5021; border: 3px solid #8A5021; }
+        .table thead { background-color: #6c3e18; color: white; }
+        .table tbody { background-color: #8A5021; }
+        .table tbody tr:hover { background-color: #6c3e18; color: white; }
+        .table img { width: 50px; height: 50px; object-fit: cover; }
+
+        /* Estilos para la paginación */
+        .pagination {
             margin-top: 20px;
-            background-color: #8A5021;
-            border-radius: 10px;
-            color: white;
         }
-        h1, h3 {
-            text-align: center;
-        }
-        .form-inline {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            flex-wrap: nowrap;
-            gap: 10px;
-        }
-        .btn-primary, .btn-warning {
-            background-color: #8A5021;
-            color: white;
-            border: 2px solid white;
-        }
-        .btn-primary:hover, .btn-warning:hover {
+        .pagination .page-item.active .page-link {
             background-color: #6c3e18;
-            border-color: white;
+            border-color: #6c3e18;
         }
-        .table {
-            margin-top: 30px;
-            border-radius: 8px;
-            border: 3px solid #8A5021;
-            overflow: hidden;
-        }
-        .table th, .table td {
-            text-align: center;
-            vertical-align: middle;
-            color: #8A5021;
-            border: 3px solid #8A5021;
-        }
-        .table thead {
-            background-color: #6c3e18;
+        .pagination .page-item .page-link {
+            background-color: #a67c52;
+            border-color: #8A5021;
             color: white;
         }
-        .table tbody {
+        .pagination .page-item .page-link:hover {
             background-color: #8A5021;
-        }
-        .table tbody tr:hover {
-            background-color: #6c3e18;
+            border-color: #6c3e18;
             color: white;
         }
-        .table img {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
+        .form-select{
+            background-color: #a67c52;
+            color: white;
+            border: 2px solid #8A5021;
         }
+        /* Estilo para el selector de registros por página */
+        .form-inline select, .form-inline input[type="number"] {
+            background-color: #a67c52;
+            color: white;
+            border: 2px solid #8A5021;
+        }
+        .form-inline select:hover, .form-inline input[type="number"]:hover {
+            background-color: #8A5021;
+            border-color: #6c3e18;
+        }
+
+        /* Estilo para el botón eliminar */
+        .btn-danger {
+            background-color: #d33;
+            border-color: #d33;
+        }
+        .btn-danger:hover {
+            background-color: #a02a2a;
+            border-color: #a02a2a;
+        }
+
+        /* Cambiar color del texto del placeholder a blanco */
+        input::placeholder, select::placeholder {
+            color: white;
+        }
+
     </style>
 </head>
 <body>
@@ -186,6 +215,16 @@ $stmtMesas->execute($params);
             </form>
         </div>
 
+        <!-- Selección de registros por página -->
+        <form method="POST" class="mb-3">
+            <label for="recordsPerPage" class="me-2">Registros por página:</label>
+            <select name="recordsPerPage" id="recordsPerPage" class="form-select w-auto d-inline" onchange="this.form.submit();">
+                <option value="5" <?= $recordsPerPage == 5 ? 'selected' : ''; ?>>5</option>
+                <option value="10" <?= $recordsPerPage == 10 ? 'selected' : ''; ?>>10</option>
+                <option value="20" <?= $recordsPerPage == 20 ? 'selected' : ''; ?>>20</option>
+            </select>
+        </form>
+
         <!-- Tabla de Mesas -->
         <div>
             <table class="table">
@@ -195,7 +234,7 @@ $stmtMesas->execute($params);
                         <th>Sala</th>
                         <th>Capacidad</th>
                         <th>Estado</th>
-                        <th>Imagen Sala</th> <!-- Columna para la imagen de la sala -->
+                        <th>Imagen Sala</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -208,58 +247,58 @@ $stmtMesas->execute($params);
                                 <td><?= htmlspecialchars($mesa['capacity']); ?></td>
                                 <td><?= $mesa['status'] === 'free' ? 'Libre' : 'Ocupada'; ?></td>
                                 <td>
-                                    <!-- Mostrar la imagen de la sala -->
                                     <?php if (!empty($mesa['image_url'])) { ?>
-                                        <img src="<?= htmlspecialchars($mesa['image_url']); ?>" alt="Imagen de la sala">
-                                    <?php } else { ?>
-                                        <span>No disponible</span>
+                                        <img src="<?= htmlspecialchars($mesa['image_url']); ?>" alt="Imagen Sala">
                                     <?php } ?>
                                 </td>
                                 <td>
-                                    <div style="display: flex; gap: 10px; justify-content: center;">
-                                        <a href="editarMesa.php?table_id=<?= htmlspecialchars($mesa['table_id']); ?>" class="btn btn-warning">
-                                            <i class="fas fa-edit"></i> Editar
-                                        </a>
-                                        <form action="eliminarMesa.php" method="POST">
-                                            <input type="hidden" name="table_id" value="<?= htmlspecialchars($mesa['table_id']); ?>">
-                                            <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> Eliminar</button>
-                                        </form>
-                                    </div>
+                                    <a href="editarMesa.php?id=<?= $mesa['table_id']; ?>" class="btn btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="eliminarMesa.php?id=<?= $mesa['table_id']; ?>" class="btn btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
                                 </td>
                             </tr>
-                        <?php } 
-                    } else { ?>
-                        <tr><td colspan="6">No se encontraron mesas.</td></tr>
+                        <?php } ?>
+                    <?php } else { ?>
+                        <tr><td colspan="6">No hay mesas disponibles.</td></tr>
                     <?php } ?>
                 </tbody>
             </table>
+
+            <!-- Paginación -->
+            <nav aria-label="Page navigation example" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <!-- Botón Anterior -->
+                    <li class="page-item <?= ($currentPage <= 1) ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?page=<?= max(1, $currentPage - 1); ?>&sala=<?= isset($_GET['sala']) ? $_GET['sala'] : ''; ?>&estado=<?= isset($_GET['estado']) ? $_GET['estado'] : ''; ?>" aria-label="Anterior">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+
+                    <!-- Números de página -->
+                    <?php
+                    // Calcular el rango de páginas a mostrar (Ej. de 1 a 3, de 2 a 4, etc.)
+                    $startPage = max(1, $currentPage - 1);
+                    $endPage = min($totalPages, $currentPage + 1);
+
+                    for ($i = $startPage; $i <= $endPage; $i++) { ?>
+                        <li class="page-item <?= ($i == $currentPage) ? 'active' : ''; ?>">
+                            <a class="page-link" href="?page=<?= $i; ?>&sala=<?= isset($_GET['sala']) ? $_GET['sala'] : ''; ?>&estado=<?= isset($_GET['estado']) ? $_GET['estado'] : ''; ?>"><?= $i; ?></a>
+                        </li>
+                    <?php } ?>
+
+                    <!-- Botón Siguiente -->
+                    <li class="page-item <?= ($currentPage >= $totalPages) ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?page=<?= min($totalPages, $currentPage + 1); ?>&sala=<?= isset($_GET['sala']) ? $_GET['sala'] : ''; ?>&estado=<?= isset($_GET['estado']) ? $_GET['estado'] : ''; ?>" aria-label="Siguiente">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<script>
-    document.querySelectorAll('form[action="eliminarMesa.php"]').forEach((form) => {
-        form.addEventListener('submit', (e) => {
-            e.preventDefault(); // Evita el envío inmediato del formulario
-            Swal.fire({
-                title: '¿Estás seguro?',
-                text: "Esta acción eliminará la mesa definitivamente.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
-            });
-        });
-    });
-</script>
-
 </body>
 </html>
