@@ -15,8 +15,25 @@ if (!$conexion) {
     die("Error al conectar con la base de datos.");
 }
 
+// Obtener el room_id de la URL
+$roomId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+
+if ($roomId > 0) {
+    // Consultar la sala a editar
+    $sqlSala = "SELECT room_id, name_rooms, image_path FROM tbl_rooms WHERE room_id = :room_id";
+    $stmtSala = $conexion->prepare($sqlSala);
+    $stmtSala->execute([':room_id' => $roomId]);
+    $sala = $stmtSala->fetch(PDO::FETCH_ASSOC);
+
+    if (!$sala) {
+        die("Sala no encontrada.");
+    }
+} else {
+    die("ID de sala no válida.");
+}
+
 // Obtener la lista de salas para el formulario de selección
-$sqlSalas = "SELECT room_id, name_rooms, image_path FROM tbl_rooms"; // Cambié image_path a img_path
+$sqlSalas = "SELECT room_id, name_rooms FROM tbl_rooms"; 
 $stmtSalas = $conexion->query($sqlSalas);
 $salas = $stmtSalas->fetchAll(PDO::FETCH_ASSOC);
 
@@ -51,12 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } else {
         // Si no se carga nueva imagen, mantener la imagen actual
-        // Consultar la imagen actual de la base de datos
-        $sqlImagePath = "SELECT image_path FROM tbl_rooms WHERE room_id = :room_id";
-        $stmtImagePath = $conexion->prepare($sqlImagePath);
-        $stmtImagePath->execute([':room_id' => $roomId]);
-        $currentImage = $stmtImagePath->fetch(PDO::FETCH_ASSOC);
-        $imagePath = $currentImage['image_path']; // Mantener la imagen existente si no se sube una nueva
+        $imagePath = $sala['image_path']; // Mantener la imagen existente si no se sube una nueva
     }
 
     // Actualizar los datos en la base de datos
@@ -64,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $params = [':name_rooms' => $nameRooms, ':room_id' => $roomId];
 
     if ($imagePath) {
-        $sqlUpdate .= ", image_path = :image_path"; // Cambié image_path a img_path
+        $sqlUpdate .= ", image_path = :image_path"; 
         $params[':image_path'] = $imagePath;
     }
 
@@ -72,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmtUpdate = $conexion->prepare($sqlUpdate);
 
     if ($stmtUpdate->execute($params)) {
-        header('Location: ./crudMesas.php?success=1');
+        header('Location: ./crudSalas.php?success=1');
         exit();
     } else {
         $error = "Error al actualizar la sala.";
@@ -96,19 +108,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="room_id" class="form-label">Seleccionar Sala:</label>
                 <select name="room_id" id="room_id" class="form-select" required>
                     <option value="">Seleccione una sala</option>
-                    <?php foreach ($salas as $sala): ?>
-                        <option value="<?= htmlspecialchars($sala['room_id']); ?>"><?= htmlspecialchars($sala['name_rooms']); ?></option>
+                    <?php foreach ($salas as $salaOption): ?>
+                        <option value="<?= htmlspecialchars($salaOption['room_id']); ?>" 
+                            <?= ($salaOption['room_id'] == $sala['room_id']) ? 'selected' : ''; ?>>
+                            <?= htmlspecialchars($salaOption['name_rooms']); ?>
+                        </option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div class="mb-3">
                 <label for="name_rooms" class="form-label">Nombre de la Sala:</label>
-                <input type="text" name="name_rooms" id="name_rooms" class="form-control" required>
+                <input type="text" name="name_rooms" id="name_rooms" class="form-control" value="<?= htmlspecialchars($sala['name_rooms']); ?>" required>
             </div>
             <div class="mb-3">
                 <label for="image_file" class="form-label">Imagen de la Sala:</label>
                 <input type="file" name="image_file" id="image_file" class="form-control">
                 <small class="text-muted">Formatos permitidos: JPG, JPEG, PNG, GIF.</small>
+
+                <!-- Mostrar la imagen actual si existe -->
+                <?php if (!empty($sala['image_path'])): ?>
+                    <div class="mt-3">
+                        <strong>Imagen Actual:</strong><br>
+                        <img src="../../<?= htmlspecialchars($sala['image_path']); ?>" alt="Imagen de la Sala" style="max-width: 300px;">
+                    </div>
+                <?php endif; ?>
             </div>
             <?php if (!empty($error)): ?>
                 <div class="alert alert-danger"><?= htmlspecialchars($error); ?></div>
@@ -119,4 +142,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-

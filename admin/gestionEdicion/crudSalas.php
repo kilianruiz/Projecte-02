@@ -57,17 +57,15 @@ $totalPages = ceil($totalRecords / $recordsPerPage);
 $offset = ($currentPage - 1) * $recordsPerPage;
 
 $sqlMesas = "
-    SELECT tbl_tables.table_id, 
-           tbl_tables.table_number, 
+    SELECT tbl_rooms.room_id,
            tbl_rooms.name_rooms AS room_name, 
-           tbl_tables.capacity, 
-           tbl_tables.status, 
-           tbl_tables.image_path
-    FROM tbl_tables 
-    INNER JOIN tbl_rooms ON tbl_tables.room_id = tbl_rooms.room_id
+           tbl_rooms.capacity, 
+           tbl_rooms.image_path,
+           tbl_rooms.description
+    FROM tbl_rooms 
     $whereSql
     LIMIT :limit OFFSET :offset
-";
+";  
 $stmtMesas = $conexion->prepare($sqlMesas);
 
 // Vincular los parámetros para paginación
@@ -158,14 +156,17 @@ $stmtMesas->execute();
 </head>
 <body>
     <div class="top-bar">
-        Administración de Mesas
+        Administración de Salas
         <a href="../principalAdmin.php" class="btn btn-primary">Volver</a>
     </div>
     <div class="container">
         <!-- Botones para agregar mesa, sala y editar sala -->
         <div class="d-flex justify-content-between mb-4">
-            <a href="agregarMesa.php" class="btn btn-primary">
-                <i class="fas fa-plus-circle"></i> Agregar Mesa
+            <a href="editarSala.php" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Editar Sala
+            </a>
+            <a href="agregarSala.php" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Agregar Sala
             </a>
         </div>
 
@@ -179,7 +180,7 @@ $stmtMesas->execute();
 
         <!-- Filtro de Mesas -->
         <div class="mt-4">
-            <h3>Filtrar Mesas</h3>
+            <h3>Filtrar Salas</h3>
             <form class="form-inline" method="POST">
                 <select name="sala" class="form-select">
                     <option value="">Todas las Salas</option>
@@ -215,10 +216,9 @@ $stmtMesas->execute();
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Número de Mesa</th>
-                        <th>Sala</th>
+                        <th>Salas</th>
                         <th>Capacidad</th>
-                        <th>Estado</th>
+                        <th>Descripción</th>
                         <th>Imagen Sala</th>
                         <th>Acciones</th>
                     </tr>
@@ -227,10 +227,9 @@ $stmtMesas->execute();
                     <?php if ($stmtMesas->rowCount() > 0) { 
                         while ($mesa = $stmtMesas->fetch()) { ?>
                             <tr>
-                                <td><?= htmlspecialchars($mesa['table_number']); ?></td>
                                 <td><?= htmlspecialchars($mesa['room_name']); ?></td>
                                 <td><?= htmlspecialchars($mesa['capacity']); ?></td>
-                                <td><?= $mesa['status'] === 'free' ? 'Libre' : 'Ocupada'; ?></td>
+                                <td><?= htmlspecialchars($mesa['description']); ?></td>
                                 <td>
                                     <?php if (!empty($mesa['image_path'])) { ?>
                                         <img src="../../<?= htmlspecialchars($mesa['image_path']); ?>" alt="Mesa" class="mt-3 img-thumbnail" style="max-width: 400px; max-height: 300px; object-fit: cover;">
@@ -239,16 +238,17 @@ $stmtMesas->execute();
                                     <?php } ?>
                                 </td>
                                 <td>
-                                    <a href="editarMesa.php?id=<?= $mesa['table_id']; ?>" class="btn btn-warning">
+                                    <a href="editarSala.php?id=<?= $mesa['room_id']; ?>" class="btn btn-warning">
                                         <i class="fas fa-edit"></i>
                                     </a>
 
-                                    <form action="eliminarMesa.php" method="POST" style="display:inline;">
-                                        <input type="hidden" name="table_id" value="<?= $mesa['table_id']; ?>">
-                                        <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de eliminar esta mesa?')">
+                                    <form action="eliminarSala.php" method="POST" style="display:inline;">
+                                        <input type="hidden" name="room_id" value="<?= $mesa['room_id']; ?>">
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de eliminar esta sala?')">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </form>
+
                                 </td>
                             </tr>
                         <?php } 

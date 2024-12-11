@@ -49,6 +49,11 @@ if (!isset($conexion)) {
                     <button><img class="editar" src="../img/editar1.png" alt="Terrazas" onclick="mostrarEstadoTerrazas()"></button>
                 </form>
             </div>
+            <div class="room-category">
+            <form action="./gestionEdicion/crudSalas.php">
+                    <button><img class="editar" src="../img/editar1.png" alt="Terrazas" onclick="mostrarEstadoTerrazas()"></button>
+                </form>
+            </div>
         </div>
         <button class="logout-button" onclick="logout()">Cerrar Sesión</button>
     </div>
