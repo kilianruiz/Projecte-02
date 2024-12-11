@@ -43,33 +43,75 @@ $stmtGetUserId = $conexion->prepare($sqlGetUserId);
 $stmtGetUserId->execute([$usuario]);
 $userId = $stmtGetUserId->fetchColumn();
 
-// Actualizar la ocupación o desocupación de una mesa
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && isset($_POST['tableId'])) {
     $tableId = intval($_POST['tableId']);
     $action = $_POST['action'];
 
     if ($action === 'occupy') {
-        // Ocupa una mesa
-        $sqlUpdateTable = "UPDATE tbl_tables SET status = 'occupied' WHERE table_id = ?";
+        // Ocupa la mesa y registra el tiempo actual en 'occupied_since'
+        $sqlUpdateTable = "UPDATE tbl_tables 
+                           SET status = 'occupied', 
+                               occupied_since = NOW() 
+                           WHERE table_id = ? AND status = 'free'";
         $stmtUpdateTable = $conexion->prepare($sqlUpdateTable);
         $stmtUpdateTable->execute([$tableId]);
 
-        $sqlInsertOccupation = "INSERT INTO tbl_occupations (table_id, user_id, start_time) VALUES (?, ?, CURRENT_TIMESTAMP)";
-        $stmtInsertOccupation = $conexion->prepare($sqlInsertOccupation);
-        $stmtInsertOccupation->execute([$tableId, $userId]);
+        // Verifica si la mesa se ocupó correctamente
+        if ($stmtUpdateTable->rowCount() > 0) {
+            // Si la mesa fue ocupada, registrar la ocupación en tbl_occupations
+            $sqlInsertOccupation = "INSERT INTO tbl_occupations (table_id, user_id, start_time) 
+                                    VALUES (?, ?, NOW())";
+            $stmtInsertOccupation = $conexion->prepare($sqlInsertOccupation);
+            $stmtInsertOccupation->execute([$tableId, $userId]);
+        } else {
+            // Si no se actualizó, significa que la mesa ya estaba ocupada
+            echo "La mesa ya está ocupada.";
+        }
     } elseif ($action === 'free') {
-        // Libera una mesa
-        $sqlUpdateTable = "UPDATE tbl_tables SET status = 'free' WHERE table_id = ?";
+        // Libera la mesa y resetea la columna occupied_since
+        $sqlUpdateTable = "UPDATE tbl_tables 
+                           SET status = 'free', 
+                               occupied_since = NULL 
+                           WHERE table_id = ?";
         $stmtUpdateTable = $conexion->prepare($sqlUpdateTable);
         $stmtUpdateTable->execute([$tableId]);
 
-        $sqlEndOccupation = "UPDATE tbl_occupations SET end_time = CURRENT_TIMESTAMP WHERE table_id = ? AND end_time IS NULL";
+        // Actualiza la tabla de ocupaciones (si la mesa estaba ocupada)
+        $sqlEndOccupation = "UPDATE tbl_occupations 
+                             SET end_time = NOW() 
+                             WHERE table_id = ? AND end_time IS NULL";
         $stmtEndOccupation = $conexion->prepare($sqlEndOccupation);
         $stmtEndOccupation->execute([$tableId]);
     }
 
+    // Redirigir para evitar reenvío de formularios
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
+}
+
+// Liberar mesas automáticamente si han estado ocupadas por más de 2 horas
+$sqlCheckTables = "SELECT table_id, occupied_since FROM tbl_tables WHERE status = 'occupied'";
+$stmtCheckTables = $conexion->query($sqlCheckTables);
+$mesasOcupadas = $stmtCheckTables->fetchAll(PDO::FETCH_ASSOC);
+
+foreach ($mesasOcupadas as $mesa) {
+    $tableId = $mesa['table_id'];
+    $occupiedSince = new DateTime($mesa['occupied_since']);
+    $currentTime = new DateTime();
+    $interval = $currentTime->diff($occupiedSince);
+
+    // Si han pasado más de 2 horas, liberar la mesa
+    if ($interval->h >= 2) {
+        // Liberar la mesa
+        $sqlUpdateTable = "UPDATE tbl_tables SET status = 'free', occupied_since = NULL WHERE table_id = ?";
+        $stmtUpdateTable = $conexion->prepare($sqlUpdateTable);
+        $stmtUpdateTable->execute([$tableId]);
+
+        // Actualizar el historial de ocupación
+        $sqlEndOccupation = "UPDATE tbl_occupations SET end_time = CURRENT_TIMESTAMP WHERE table_id = ? AND end_time IS NULL";
+        $stmtEndOccupation = $conexion->prepare($sqlEndOccupation);
+        $stmtEndOccupation->execute([$tableId]);
+    }
 }
 
 // Obtener las mesas de la base de datos

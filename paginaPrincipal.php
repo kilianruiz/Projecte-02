@@ -1,9 +1,9 @@
-<?php 
-session_start(); 
+<?php
+session_start();
 include('./conexion/conexion.php');
 
 if (!isset($_SESSION['usuario'])) {
-    header('Location: ./index.php?error=1');   
+    header('Location: ./index.php?error=1');
     exit();
 }
 
@@ -19,20 +19,22 @@ function obtenerEstadoMesas($conexion, $roomId) {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-// Obteniendo el estado de cada terraza
-$estadoTerraza1 = obtenerEstadoMesas($conexion, 1); // Terraza 1
-$estadoTerraza2 = obtenerEstadoMesas($conexion, 2); // Terraza 2
-$estadoTerraza3 = obtenerEstadoMesas($conexion, 3); // Terraza 3
+// Obtener las salas agrupadas por tipo
+$sqlSalas = "SELECT room_id, name_rooms, room_type, image_path FROM tbl_rooms ORDER BY room_type, room_id";
+$stmtSalas = $conexion->query($sqlSalas);
+$salas = $stmtSalas->fetchAll(PDO::FETCH_ASSOC);
 
-// Obteniendo el estado de cada salón
-$estadoSalon1 = obtenerEstadoMesas($conexion, 4); // Salon 1
-$estadoSalon2 = obtenerEstadoMesas($conexion, 5); // Salon 2
+// Agrupar salas por tipo
+$salasAgrupadas = [];
+foreach ($salas as $sala) {
+    $salasAgrupadas[$sala['room_type']][] = $sala;
+}
 
-// Obteniendo el estado de cada sala VIP
-$estadoVIP1 = obtenerEstadoMesas($conexion, 6); // VIP 1
-$estadoVIP2 = obtenerEstadoMesas($conexion, 7); // VIP 2
-$estadoVIP3 = obtenerEstadoMesas($conexion, 8); // VIP 3
-$estadoVIP4 = obtenerEstadoMesas($conexion, 9); // VIP 4
+// Función para generar el estado de mesas por cada sala
+$estadosMesas = [];
+foreach ($salas as $sala) {
+    $estadosMesas[$sala['room_id']] = obtenerEstadoMesas($conexion, $sala['room_id']);
+}
 ?>
 
 <!DOCTYPE html>
@@ -44,59 +46,42 @@ $estadoVIP4 = obtenerEstadoMesas($conexion, 9); // VIP 4
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sancreek&display=swap" rel="stylesheet">
+    <style>
+        .sala-image {
+    width: 100%; /* Asegura que la imagen ocupe el 100% del contenedor */
+    height: auto; /* Mantiene la proporción de la imagen */
+    object-fit: cover; /* Hace que la imagen cubra el área disponible sin deformarse */
+    border-radius: 10px; /* Bordes redondeados para un efecto visual más agradable */
+    margin-bottom: 5px; /* Espacio debajo de la imagen */
+}
+    </style>
 </head>
 <body>
     <div><img src="./img/logo.webp" alt="Logo de la página" class="superpuesta"><br></div>
     <div class="container">
         <h1>S A L A S</h1>
         <div class="room-sections">
-            <!-- Sección de Terrazas -->
-            <div class="room-category">
-                <img src="./img/terraza.webp" alt="Terrazas" onclick="mostrarEstadoTerrazas()">
-                <div class="buttons">
-                    <form action="./salones/terraza1.php">
-                        <button><img class="nums" src="./img/nums/1.webp" alt=""></button>
-                    </form>
-                    <form action="./salones/terraza2.php">
-                        <button><img class="nums" src="./img/nums/2.webp" alt=""></button>
-                    </form>
-                    <form action="./salones/terraza3.php">
-                        <button><img class="nums" src="./img/nums/3.webp" alt=""></button>
-                    </form>
+            <?php foreach ($salasAgrupadas as $tipo => $salasPorTipo): ?>
+                <div class="room-category">
+                    <h2><?= ucfirst($tipo) ?></h2>
+                    <div class="buttons">
+                        <?php foreach ($salasPorTipo as $sala): ?>
+                            <form action="./salones/terraza<?= $sala['room_id'] ?>.php" method="get">
+                                <div class="sala-item">
+                                    <?php if (!empty($sala['image_path'])): ?>
+                                        <img src="<?= htmlspecialchars($sala['image_path']) ?>" alt="Imagen de la Sala" class="sala-image">
+                                    <?php else: ?>
+                                        <p>No hay imagen disponible</p>
+                                    <?php endif; ?>
+                                    <button type="submit">
+                                        <?= htmlspecialchars($sala['name_rooms']) ?>
+                                    </button>
+                                </div>
+                            </form>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Sección de Salones Principales -->
-            <div class="room-category">
-                <img src="./img/salon.webp" alt="Salones Principales" onclick="mostrarEstadoSalones()">
-                <div class="buttons">
-                    <form action="./salones/salon1.php">
-                        <button><img class="nums" src="./img/nums/1.webp" alt=""></button>
-                    </form>
-                    <form action="./salones/salon2.php">
-                        <button><img class="nums" src="./img/nums/2.webp" alt=""></button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Sección de Salas Privadas -->
-            <div class="room-category">
-                <img src="./img/vip.webp" alt="Salas Privadas" onclick="mostrarEstadoVIPS()">
-                <div class="buttons">
-                    <form action="./salones/vip1.php">
-                        <button><img class="nums" src="./img/nums/1.webp" alt=""></button>
-                    </form>
-                    <form action="./salones/vip2.php">
-                        <button><img class="nums" src="./img/nums/2.webp" alt=""></button>
-                    </form>
-                    <form action="./salones/vip3.php">
-                        <button><img class="nums" src="./img/nums/3.webp" alt=""></button>
-                    </form>
-                    <form action="./salones/vip4.php">
-                        <button><img class="nums" src="./img/nums/4.webp" alt=""></button>
-                    </form>
-                </div>
-            </div>
+            <?php endforeach; ?>
         </div>
         <button class="logout-button" onclick="logout1()">Cerrar Sesión</button>
     </div>
@@ -104,25 +89,5 @@ $estadoVIP4 = obtenerEstadoMesas($conexion, 9); // VIP 4
     <script src="./validaciones/funciones.js"></script>
     <script src="./validaciones/funcionesPaginaPrincipal.js"></script>
 
-    <div id="estadoTerraza" 
-        data-ocupadas-t1="<?php echo $estadoTerraza1['ocupadas']; ?>"
-        data-libres-t1="<?php echo $estadoTerraza1['libres']; ?>"
-        data-ocupadas-t2="<?php echo $estadoTerraza2['ocupadas']; ?>"
-        data-libres-t2="<?php echo $estadoTerraza2['libres']; ?>"
-        data-ocupadas-t3="<?php echo $estadoTerraza3['ocupadas']; ?>"
-        data-libres-t3="<?php echo $estadoTerraza3['libres']; ?>"
-        data-ocupadas-s1="<?php echo $estadoSalon1['ocupadas']; ?>"
-        data-libres-s1="<?php echo $estadoSalon1['libres']; ?>"
-        data-ocupadas-s2="<?php echo $estadoSalon2['ocupadas']; ?>"
-        data-libres-s2="<?php echo $estadoSalon2['libres']; ?>"
-        data-ocupadas-v1="<?php echo $estadoVIP1['ocupadas']; ?>"
-        data-libres-v1="<?php echo $estadoVIP1['libres']; ?>"
-        data-ocupadas-v2="<?php echo $estadoVIP2['ocupadas']; ?>"
-        data-libres-v2="<?php echo $estadoVIP2['libres']; ?>"
-        data-ocupadas-v3="<?php echo $estadoVIP3['ocupadas']; ?>"
-        data-libres-v3="<?php echo $estadoVIP3['libres']; ?>"
-        data-ocupadas-v4="<?php echo $estadoVIP4['ocupadas']; ?>"
-        data-libres-v4="<?php echo $estadoVIP4['libres']; ?>">
-    </div>
 </body>
 </html>

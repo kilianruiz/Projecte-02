@@ -162,6 +162,20 @@ $stmtMesas->execute();
         <a href="../principalAdmin.php" class="btn btn-primary">Volver</a>
     </div>
     <div class="container">
+        <!-- Botones para agregar mesa, sala y editar sala -->
+        <div class="d-flex justify-content-between mb-4">
+            <a href="agregarMesa.php" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Agregar Mesa
+            </a>
+            <a href="editarSala.php" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Editar Sala
+            </a>
+            <a href="agregarSala.php" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Agregar Sala
+            </a>
+        </div>
+
+
         <!-- Mensajes de éxito o error -->
         <?php if (isset($_GET['success'])) { ?>
             <div class="alert alert-success">Mesa añadida exitosamente.</div>
@@ -169,30 +183,7 @@ $stmtMesas->execute();
             <div class="alert alert-danger"><?= nl2br(htmlspecialchars($_GET['errors'])); ?></div>
         <?php } ?>
 
-        <!-- Añadir Mesa -->
-        <div>
-            <h3>Añadir Mesa</h3>
-            <form class="form-inline" method="POST" action="crearMesa.php">
-                <input type="hidden" name="action" value="add">
-                <select name="room_id" class="form-select">
-                    <option value="" disabled selected>Seleccionar Sala</option>
-                    <?php while ($sala = $stmtSalas->fetch()) { ?>
-                        <option value="<?= htmlspecialchars($sala['room_id']); ?>">
-                            <?= htmlspecialchars($sala['name_rooms']); ?>
-                        </option>
-                    <?php } ?>
-                </select>
-                <input type="number" name="table_number" class="form-control" placeholder="Número de Mesa">
-                <input type="number" name="capacity" class="form-control" placeholder="Capacidad">
-                <select name="status" class="form-select">
-                    <option value="free">Libre</option>
-                    <option value="occupied">Ocupada</option>
-                </select>
-                <button type="submit" class="btn btn-primary">Añadir</button>
-            </form>
-        </div>
-
-        <!-- Filtrar Mesas -->
+        <!-- Filtro de Mesas -->
         <div class="mt-4">
             <h3>Filtrar Mesas</h3>
             <form class="form-inline" method="POST">
@@ -201,15 +192,15 @@ $stmtMesas->execute();
                     <?php
                     $stmtSalas->execute(); // Volver a ejecutar para el segundo uso
                     while ($sala = $stmtSalas->fetch()) { ?>
-                        <option value="<?= htmlspecialchars($sala['room_id']); ?>">
+                        <option value="<?= htmlspecialchars($sala['room_id']); ?>" <?= isset($_POST['sala']) && $_POST['sala'] == $sala['room_id'] ? 'selected' : ''; ?>>
                             <?= htmlspecialchars($sala['name_rooms']); ?>
                         </option>
                     <?php } ?>
                 </select>
                 <select name="estado" class="form-select">
                     <option value="">Todos los estados</option>
-                    <option value="free">Libre</option>
-                    <option value="occupied">Ocupada</option>
+                    <option value="free" <?= isset($_POST['estado']) && $_POST['estado'] == 'free' ? 'selected' : ''; ?>>Libre</option>
+                    <option value="occupied" <?= isset($_POST['estado']) && $_POST['estado'] == 'occupied' ? 'selected' : ''; ?>>Ocupada</option>
                 </select>
                 <button type="submit" class="btn btn-warning">Filtrar</button>
             </form>
@@ -249,67 +240,49 @@ $stmtMesas->execute();
                                 <td>
                                     <?php if (!empty($mesa['image_path'])) { ?>
                                         <img src="../../<?= htmlspecialchars($mesa['image_path']); ?>" alt="Mesa" class="mt-3 img-thumbnail" style="max-width: 400px; max-height: 300px; object-fit: cover;">
-                                        <?php } else { ?>
+                                    <?php } else { ?>
                                         Sin Imagen
                                     <?php } ?>
                                 </td>
                                 <td>
-                                    <!-- Botón de edición -->
                                     <a href="editarMesa.php?id=<?= $mesa['table_id']; ?>" class="btn btn-warning">
                                         <i class="fas fa-edit"></i>
                                     </a>
 
-                                    <!-- Formulario de eliminación (en lugar de solo un enlace) -->
                                     <form action="eliminarMesa.php" method="POST" style="display:inline;">
                                         <input type="hidden" name="table_id" value="<?= $mesa['table_id']; ?>">
-                                        <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar esta mesa?');">
-                                            <i class="fas fa-trash"></i>
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de eliminar esta mesa?')">
+                                            <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </form>
                                 </td>
-
                             </tr>
-                        <?php } ?>
-                    <?php } else { ?>
+                        <?php } 
+                    } else { ?>
                         <tr>
-                            <td colspan="6">No se encontraron mesas.</td>
+                            <td colspan="6" class="text-center">No hay mesas disponibles.</td>
                         </tr>
                     <?php } ?>
                 </tbody>
             </table>
-        </div>
 
-                    <!-- Paginación -->
-                    <nav aria-label="Page navigation example" class="mt-4">
-                <ul class="pagination justify-content-center">
-                    <!-- Botón Anterior -->
-                    <li class="page-item <?= ($currentPage <= 1) ? 'disabled' : ''; ?>">
-                        <a class="page-link" href="?page=<?= max(1, $currentPage - 1); ?>&sala=<?= isset($_GET['sala']) ? $_GET['sala'] : ''; ?>&estado=<?= isset($_GET['estado']) ? $_GET['estado'] : ''; ?>" aria-label="Anterior">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
-                    </li>
-
-                    <!-- Números de página -->
-                    <?php
-                    // Calcular el rango de páginas a mostrar (Ej. de 1 a 3, de 2 a 4, etc.)
-                    $startPage = max(1, $currentPage - 1);
-                    $endPage = min($totalPages, $currentPage + 1);
-
-                    for ($i = $startPage; $i <= $endPage; $i++) { ?>
-                        <li class="page-item <?= ($i == $currentPage) ? 'active' : ''; ?>">
-                            <a class="page-link" href="?page=<?= $i; ?>&sala=<?= isset($_GET['sala']) ? $_GET['sala'] : ''; ?>&estado=<?= isset($_GET['estado']) ? $_GET['estado'] : ''; ?>"><?= $i; ?></a>
-                        </li>
+            <!-- Paginación -->
+            <div class="pagination">
+                <ul class="pagination">
+                    <?php if ($currentPage > 1) { ?>
+                        <li class="page-item"><a class="page-link" href="?page=1">Primera</a></li>
+                        <li class="page-item"><a class="page-link" href="?page=<?= $currentPage - 1 ?>">Anterior</a></li>
                     <?php } ?>
-
-                    <!-- Botón Siguiente -->
-                    <li class="page-item <?= ($currentPage >= $totalPages) ? 'disabled' : ''; ?>">
-                        <a class="page-link" href="?page=<?= min($totalPages, $currentPage + 1); ?>&sala=<?= isset($_GET['sala']) ? $_GET['sala'] : ''; ?>&estado=<?= isset($_GET['estado']) ? $_GET['estado'] : ''; ?>" aria-label="Siguiente">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
-                    </li>
+                    <li class="page-item active"><span class="page-link"><?= $currentPage ?></span></li>
+                    <?php if ($currentPage < $totalPages) { ?>
+                        <li class="page-item"><a class="page-link" href="?page=<?= $currentPage + 1 ?>">Siguiente</a></li>
+                        <li class="page-item"><a class="page-link" href="?page=<?= $totalPages ?>">Última</a></li>
+                    <?php } ?>
                 </ul>
-            </nav>
-
+            </div>
+        </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

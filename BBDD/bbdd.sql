@@ -27,7 +27,8 @@ CREATE TABLE tbl_rooms (
     name_rooms VARCHAR(50) NOT NULL,
     capacity INT NOT NULL,
     description TEXT,
-    image_url VARCHAR(255)  -- Nueva columna para la URL de la imagen
+    image_path VARCHAR(255) DEFAULT NULL,  -- Columna para la URL de la imagen de la mesa
+    room_type ENUM('terraza', 'salon', 'vip') NOT NULL  -- Nueva columna para el tipo de sala
 );
 
 -- Tabla de Mesas
@@ -38,6 +39,7 @@ CREATE TABLE tbl_tables (
     capacity INT NOT NULL,
     status ENUM('free', 'occupied') DEFAULT 'free',  -- Estado de mesa (ocupada o libre)
     occupied_since DATETIME NULL,  -- Nueva columna para la fecha de ocupación
+    image_path VARCHAR(255) DEFAULT NULL,  -- Columna para la URL de la imagen de la mesa
     FOREIGN KEY (room_id) REFERENCES tbl_rooms(room_id) ON DELETE CASCADE
 );
 
@@ -93,17 +95,17 @@ VALUES (44);
 INSERT INTO tbl_roles (role_name) VALUES ('Camarero'), ('Administrador');
 
 -- Insertar salas en la tabla de salas con imágenes asociadas
-INSERT INTO tbl_rooms (name_rooms, capacity, description, image_url) 
+INSERT INTO tbl_rooms (name_rooms, capacity, description, room_type) 
 VALUES 
-    ('Terraza 1', 5, 'Primera terraza exterior del restaurante', 'img/terrazas/terraza1.jpg'),
-    ('Terraza 2', 10, 'Segunda terraza con vistas al parque', 'img/terrazas/terraza2.jpg'),
-    ('Terraza 3', 5, 'Tercera terraza con ambiente acogedor', 'img/terrazas/terraza3.jpg'),
-    ('Salón 1', 15, 'Salón principal del restaurante', 'img/terrazas/salon1.jpg'),
-    ('Salón 2', 20, 'Salón secundario con capacidad amplia', 'img/terrazas/salon2.jpg'),
-    ('Sala Privada 1', 4, 'Sala privada para eventos pequeños', 'img/terrazas/sala_privada1.jpg'),
-    ('Sala Privada 2', 1, 'Sala privada con ambiente íntimo', 'img/terrazas/sala_privada2.jpg'),
-    ('Sala Privada 3', 2, 'Sala privada para reuniones exclusivas', 'img/terrazas/sala_privada3.jpg'),
-    ('Sala Privada 4', 8, 'Sala privada de tamaño mediano', 'img/terrazas/sala_privada4.jpg');
+    ('Terraza 1', 5, 'Primera terraza exterior del restaurante', 'terraza'),
+    ('Terraza 2', 10, 'Segunda terraza con vistas al parque','terraza'),
+    ('Terraza 3', 5, 'Tercera terraza con ambiente acogedor', 'terraza'),
+    ('Salón 1', 15, 'Salón principal del restaurante', 'salon'),
+    ('Salón 2', 20, 'Salón secundario con capacidad amplia', 'salon'),
+    ('Sala Privada 1', 4, 'Sala privada para eventos pequeños', 'vip'),
+    ('Sala Privada 2', 1, 'Sala privada con ambiente íntimo', 'vip'),
+    ('Sala Privada 3', 2, 'Sala privada para reuniones exclusivas', 'vip'),
+    ('Sala Privada 4', 8, 'Sala privada de tamaño mediano', 'vip');
 
 -- Insertar mesas en la tabla de mesas (70 ocupadas, 10 libres)
 INSERT INTO tbl_tables (room_id, table_number, capacity, status) VALUES
@@ -195,12 +197,13 @@ SELECT * FROM tbl_chairs_stock;
 SELECT * FROM tbl_tables_stock;
 SELECT table_id, status FROM tbl_tables ORDER BY table_id;
 
+-- Actualizar el stock de sillas
 UPDATE tbl_chairs_stock 
 SET chairs_in_warehouse = 44 
 WHERE stock_id = 1;
 
+-- Actualizar el estado de las mesas a 'free' y limpiar la columna 'occupied_since'
 UPDATE tbl_tables
 SET status = 'free',
-    occupied_since = NULL; 
+    occupied_since = NULL;
 
-ALTER TABLE tbl_tables ADD image_path VARCHAR(255) DEFAULT NULL;
