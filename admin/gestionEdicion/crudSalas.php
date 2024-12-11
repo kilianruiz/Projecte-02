@@ -27,14 +27,9 @@ $stmtSalas = $conexion->query($sqlSalas);
 $params = [];
 $whereSql = '';
 
-if (!empty($_POST['sala'])) {
-    $whereSql .= " AND tbl_tables.room_id = :room_id";
-    $params[':room_id'] = intval($_POST['sala']);
-}
-
-if (!empty($_POST['estado'])) {
-    $whereSql .= " AND tbl_tables.status = :status";
-    $params[':status'] = $_POST['estado'];
+if (!empty($_POST['name_rooms'])) {
+    $whereSql .= " AND tbl_rooms.name_rooms LIKE :name_rooms";
+    $params[':name_rooms'] = '%' . $_POST['name_rooms'] . '%';
 }
 
 // Eliminar el primer "AND" si existe
@@ -170,10 +165,9 @@ $stmtMesas->execute();
             </a>
         </div>
 
-
         <!-- Mensajes de éxito o error -->
         <?php if (isset($_GET['success'])) { ?>
-            <div class="alert alert-success">Mesa añadida exitosamente.</div>
+            <div class="alert alert-success">Mesa añadida correctamente.</div>
         <?php } elseif (isset($_GET['errors'])) { ?>
             <div class="alert alert-danger"><?= nl2br(htmlspecialchars($_GET['errors'])); ?></div>
         <?php } ?>
@@ -182,21 +176,7 @@ $stmtMesas->execute();
         <div class="mt-4">
             <h3>Filtrar Salas</h3>
             <form class="form-inline" method="POST">
-                <select name="sala" class="form-select">
-                    <option value="">Todas las Salas</option>
-                    <?php
-                    $stmtSalas->execute(); // Volver a ejecutar para el segundo uso
-                    while ($sala = $stmtSalas->fetch()) { ?>
-                        <option value="<?= htmlspecialchars($sala['room_id']); ?>" <?= isset($_POST['sala']) && $_POST['sala'] == $sala['room_id'] ? 'selected' : ''; ?>>
-                            <?= htmlspecialchars($sala['name_rooms']); ?>
-                        </option>
-                    <?php } ?>
-                </select>
-                <select name="estado" class="form-select">
-                    <option value="">Todos los estados</option>
-                    <option value="free" <?= isset($_POST['estado']) && $_POST['estado'] == 'free' ? 'selected' : ''; ?>>Libre</option>
-                    <option value="occupied" <?= isset($_POST['estado']) && $_POST['estado'] == 'occupied' ? 'selected' : ''; ?>>Ocupada</option>
-                </select>
+                <input type="text" name="name_rooms" class="form-select" placeholder="Buscar por nombre de sala" value="<?= isset($_POST['name_rooms']) ? htmlspecialchars($_POST['name_rooms']) : ''; ?>">
                 <button type="submit" class="btn btn-warning">Filtrar</button>
             </form>
         </div>

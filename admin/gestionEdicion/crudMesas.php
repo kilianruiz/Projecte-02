@@ -172,7 +172,7 @@ $stmtMesas->execute();
 
         <!-- Mensajes de éxito o error -->
         <?php if (isset($_GET['success'])) { ?>
-            <div class="alert alert-success">Mesa añadida exitosamente.</div>
+            <div class="alert alert-success">Mesa añadida correctamente.</div>
         <?php } elseif (isset($_GET['errors'])) { ?>
             <div class="alert alert-danger"><?= nl2br(htmlspecialchars($_GET['errors'])); ?></div>
         <?php } ?>
