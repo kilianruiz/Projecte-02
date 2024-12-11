@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../conexion/conexion.php';
+require_once '../conexion/conexion.php';
 
 // Función para convertir un número entero a un número romano
 function romanNumerals($number) {
@@ -38,44 +38,62 @@ if (!isset($_SESSION['usuario'])) {
 $usuario = $_SESSION['usuario'];
 
 // Obtener ID del usuario basado en el nombre de usuario
-$sqlGetUserId = "SELECT user_id FROM tbl_users WHERE username = ?";
-$stmtGetUserId = $conexion->prepare($sqlGetUserId);
-$stmtGetUserId->execute([$usuario]);
-$userId = $stmtGetUserId->fetchColumn();
+try {
+    $sqlGetUserId = "SELECT user_id FROM tbl_users WHERE username = :username";
+    $stmtGetUserId = $conexion->prepare($sqlGetUserId);
+    $stmtGetUserId->bindParam(':username', $usuario, PDO::PARAM_STR);
+    $stmtGetUserId->execute();
+    $result = $stmtGetUserId->fetch(PDO::FETCH_ASSOC);
+    $userId = ($result) ? $result['user_id'] : null;
+} catch (PDOException $e) {
+    die("Error al obtener el ID del usuario: " . $e->getMessage());
+}
 
 // Actualizar la ocupación o desocupación de una mesa
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && isset($_POST['tableId'])) {
-    $tableId = intval($_POST['tableId']);
+    $tableId = $_POST['tableId'];
     $action = $_POST['action'];
 
-    if ($action === 'occupy') {
-        // Ocupa una mesa
-        $sqlUpdateTable = "UPDATE tbl_tables SET status = 'occupied' WHERE table_id = ?";
-        $stmtUpdateTable = $conexion->prepare($sqlUpdateTable);
-        $stmtUpdateTable->execute([$tableId]);
+    try {
+        if ($action === 'occupy') {
+            $sqlUpdateTable = "UPDATE tbl_tables SET status = 'occupied' WHERE table_id = :table_id";
+            $stmtUpdateTable = $conexion->prepare($sqlUpdateTable);
+            $stmtUpdateTable->bindParam(':table_id', $tableId, PDO::PARAM_INT);
+            $stmtUpdateTable->execute();
 
-        $sqlInsertOccupation = "INSERT INTO tbl_occupations (table_id, user_id, start_time) VALUES (?, ?, CURRENT_TIMESTAMP)";
-        $stmtInsertOccupation = $conexion->prepare($sqlInsertOccupation);
-        $stmtInsertOccupation->execute([$tableId, $userId]);
-    } elseif ($action === 'free') {
-        // Libera una mesa
-        $sqlUpdateTable = "UPDATE tbl_tables SET status = 'free' WHERE table_id = ?";
-        $stmtUpdateTable = $conexion->prepare($sqlUpdateTable);
-        $stmtUpdateTable->execute([$tableId]);
+            $sqlInsertOccupation = "INSERT INTO tbl_occupations (table_id, user_id, start_time) VALUES (:table_id, :user_id, CURRENT_TIMESTAMP)";
+            $stmtInsertOccupation = $conexion->prepare($sqlInsertOccupation);
+            $stmtInsertOccupation->bindParam(':table_id', $tableId, PDO::PARAM_INT);
+            $stmtInsertOccupation->bindParam(':user_id', $userId, PDO::PARAM_INT);
+            $stmtInsertOccupation->execute();
+        } elseif ($action === 'free') {
+            $sqlUpdateTable = "UPDATE tbl_tables SET status = 'free' WHERE table_id = :table_id";
+            $stmtUpdateTable = $conexion->prepare($sqlUpdateTable);
+            $stmtUpdateTable->bindParam(':table_id', $tableId, PDO::PARAM_INT);
+            $stmtUpdateTable->execute();
 
-        $sqlEndOccupation = "UPDATE tbl_occupations SET end_time = CURRENT_TIMESTAMP WHERE table_id = ? AND end_time IS NULL";
-        $stmtEndOccupation = $conexion->prepare($sqlEndOccupation);
-        $stmtEndOccupation->execute([$tableId]);
+            $sqlEndOccupation = "UPDATE tbl_occupations SET end_time = CURRENT_TIMESTAMP WHERE table_id = :table_id AND end_time IS NULL";
+            $stmtEndOccupation = $conexion->prepare($sqlEndOccupation);
+            $stmtEndOccupation->bindParam(':table_id', $tableId, PDO::PARAM_INT);
+            $stmtEndOccupation->execute();
+        }
+    } catch (PDOException $e) {
+        die("Error al actualizar la mesa: " . $e->getMessage());
     }
 
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
 }
 
-// Consultar el estado actual de cada mesa en la terraza
-$sql = "SELECT table_id, status FROM tbl_tables WHERE room_id = 1";
-$stmt = $conexion->query($sql);
-$mesas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Obtener las mesas para mostrar
+try {
+    $sql = "SELECT table_id, status FROM tbl_tables WHERE table_id BETWEEN 21 AND 30";
+    $stmt = $conexion->prepare($sql);
+    $stmt->execute();
+    $tables = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Error al obtener las mesas: " . $e->getMessage());
+}
 ?>
 
 <!DOCTYPE html>
@@ -83,7 +101,7 @@ $mesas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terraza I</title>
+    <title>Terraza II</title>
     <link rel="stylesheet" href="../styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sancreek&display=swap" rel="stylesheet">
@@ -92,16 +110,16 @@ $mesas = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div><img src="./../img/logo.webp" alt="Logo de la página" class="superpuesta"><br></div>
     <div class="container2">
         <div class="header">
-            <h1>T e r r a z a    I</h1>
+            <h1>S A L Ó N    I</h1> 
         </div>
-        <div class="grid">
+        <div class="grid2">
             <?php
             // Generar HTML para cada mesa
-            foreach ($mesas as $mesa) {
-                $tableId = $mesa['table_id'];
-                $status = $mesa['status'];
+            foreach ($tables as $row) {
+                $tableId = $row['table_id'];
+                $status = $row['status'];
                 $romanTableId = romanNumerals($tableId); // Convertimos a números romanos
-                $imgSrc = ($status === 'occupied') ? '../img/sombrillaRoja.webp' : '../img/sombrilla.webp';
+                $imgSrc = ($status === 'occupied') ? '../img/salonRoja.webp' : '../img/salonVerde.webp';
 
                 echo "
                 <div class='table' id='mesa$tableId' onclick='openTableOptions($tableId, \"$status\", \"$romanTableId\")'>
@@ -117,7 +135,6 @@ $mesas = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 ";
             }
             ?>
-
         </div>
 
         <button class="logout-button" onclick="logout()">Cerrar Sesión</button>

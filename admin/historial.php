@@ -128,42 +128,42 @@ $usuarios = $usuariosStmt->fetchAll(PDO::FETCH_COLUMN);
         </form>
 
         <!-- Tabla de Resultados -->
-            <?php
-            if (count($result) > 0) {
-                echo "<table class='tabla tabla-bordered tabla-striped'>";
-                echo "<thead class='thead-dark'>
-                        <tr>
-                            <th>Número de Mesa</th>
-                            <th>Sala</th>
-                            <th>Estado</th>
-                            <th>Fecha Ocupación</th>
-                            <th>Fecha Liberación</th>
-                            <th>Usuario</th>
-                            <th>Acciones</th>
-                        </tr>
-                      </thead>";
-                echo "<tbody>";
-                
-                foreach ($result as $row) {
-                    $estadoClase = $row["status"] == "occupied" ? "table-danger" : "table-success";
-                    echo "<tr class='{$estadoClase}'>
-                            <td>" . htmlspecialchars($row["table_number"]) . "</td>
-                            <td>" . htmlspecialchars($row["room_name"]) . "</td>
-                            <td>" . ucfirst(htmlspecialchars($row["status"])) . "</td>
-                            <td>" . ($row["start_time"] ?: "N/A") . "</td>
-                            <td>" . ($row["end_time"] ? $row["end_time"] : "Ocupada actualmente") . "</td>
-                            <td>" . htmlspecialchars($row["username"]) . "</td>
-                            <td>
-                                <a href='./gestionMesas/editar_ocupacion.php?id=" . htmlspecialchars($row["table_id"]) . "' class='btn btn-warning btn-sm'>Editar</a>
-                                <button class='btn btn-danger btn-sm' onclick='confirmarEliminacion(" . htmlspecialchars($row["table_id"]) . ")'>Eliminar</button>
-                            </td>
-                          </tr>";
-                }
-                echo "</tbody></table>";
-            } else {
-                echo "<p class='text-center text-warning'>No hay resultados que coincidan con los filtros aplicados.</p>";
+        <?php
+        if (count($result) > 0) {
+            echo "<table class='tabla tabla-bordered tabla-striped'>";
+            echo "<thead class='thead-dark'>
+                    <tr>
+                        <th>Número de Mesa</th>
+                        <th>Sala</th>
+                        <th>Estado</th>
+                        <th>Fecha Ocupación</th>
+                        <th>Fecha Liberación</th>
+                        <th>Usuario</th>
+                        <th>Acciones</th>
+                    </tr>
+                  </thead>";
+            echo "<tbody>";
+            
+            foreach ($result as $row) {
+                $estadoClase = $row["status"] == "occupied" ? "table-danger" : "table-success";
+                echo "<tr class='{$estadoClase}'>
+                        <td>" . htmlspecialchars($row["table_number"]) . "</td>
+                        <td>" . htmlspecialchars($row["room_name"]) . "</td>
+                        <td>" . ucfirst(htmlspecialchars($row["status"])) . "</td>
+                        <td>" . ($row["start_time"] ?: "N/A") . "</td>
+                        <td>" . ($row["end_time"] ? $row["end_time"] : "Ocupada actualmente") . "</td>
+                        <td>" . htmlspecialchars($row["username"]) . "</td>
+                        <td>
+                            <a href='./gestionMesas/editar_ocupacion.php?id=" . htmlspecialchars($row["table_id"]) . "' class='btn btn-warning btn-sm'>Editar</a>
+                            <button class='btn btn-danger btn-sm' onclick='confirmarEliminacion(" . htmlspecialchars($row["table_id"]) . ")'>Eliminar</button>
+                        </td>
+                      </tr>";
             }
-            ?>
+            echo "</tbody></table>";
+        } else {
+            echo "<p class='text-center text-warning'>No hay resultados que coincidan con los filtros aplicados.</p>";
+        }
+        ?>
         <br>
         <div class="text-right mb-3">
             <form id="eliminarHistorialForm" action="eliminar_historial.php" method="post">

@@ -66,14 +66,14 @@ foreach ($salas as $sala) {
                     <h2><?= ucfirst($tipo) ?></h2>
                     <div class="buttons">
                         <?php foreach ($salasPorTipo as $sala): ?>
-                            <form action="./salones/terraza<?= $sala['room_id'] ?>.php" method="get">
+                            <form action="./salones/template.php" method="get">
                                 <div class="sala-item">
                                     <?php if (!empty($sala['image_path'])): ?>
                                         <img src="<?= htmlspecialchars($sala['image_path']) ?>" alt="Imagen de la Sala" class="sala-image">
                                     <?php else: ?>
                                         <p>No hay imagen disponible</p>
                                     <?php endif; ?>
-                                    <button type="submit">
+                                    <button type="submit" name="room_id" value="<?= $sala['room_id'] ?>">
                                         <?= htmlspecialchars($sala['name_rooms']) ?>
                                     </button>
                                 </div>

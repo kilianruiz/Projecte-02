@@ -3,7 +3,7 @@ session_start();
 
 // Verificar si el usuario es administrador
 if ($_SESSION['role_name'] !== 'Administrador') {
-    header('Location: ../index.php?error=2');
+    header('Location: ../../index.php?error=2');
     exit();
 }
 
@@ -74,7 +74,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     // Ejecutar la consulta
     try {
         $stmtInsertSala->execute($params);
-        header("Location: crudMesas.php?success=1");
+
+        // Obtener el ID de la sala recién creada
+        $roomId = $conexion->lastInsertId();
+
+        // Crear el nombre de archivo PHP para la nueva terraza
+        $newPageName = strtolower(str_replace(' ', '', $name_rooms)) . ".php";
+        $newPagePath = "../../salones/" . $newPageName;
+
+        // Construir el contenido del archivo PHP con la plantilla
+        $pageContent = "<?php
+\$roomName = '$name_rooms';
+\$roomId = $roomId;
+include '../../salones/template.php'; // Incluimos la plantilla
+?>";
+
+        // Crear el archivo PHP
+        file_put_contents($newPagePath, $pageContent);
+
+        // Redirigir a una página de éxito
+        header("Location: crudSalas.php?success=1");
         exit();
     } catch (Exception $e) {
         echo "<script>alert('Error al crear la sala: " . $e->getMessage() . "');</script>";
