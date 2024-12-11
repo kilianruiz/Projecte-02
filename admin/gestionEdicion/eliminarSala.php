@@ -14,50 +14,30 @@ if (!isset($conexion)) {
     die("Error: La conexión a la base de datos no se estableció correctamente.");
 }
 
-if (isset($_POST['table_id']) && is_numeric($_POST['table_id'])) {
-    $table_id = $_POST['table_id'];
+if (isset($_POST['room_id']) && is_numeric($_POST['room_id'])) {
+    $room_id = $_POST['room_id'];
 
     try {
         // Iniciar transacción
         $conexion->beginTransaction();
 
-        // Eliminar registros de ocupaciones asociadas a la mesa
-        $sqlOccupations = "DELETE FROM tbl_occupations WHERE table_id = :table_id";
+        // 1. Eliminar todas las ocupaciones asociadas a las mesas de la sala
+        $sqlOccupations = "DELETE FROM tbl_occupations WHERE table_id IN (SELECT table_id FROM tbl_tables WHERE room_id = :room_id)";
         $stmtOccupations = $conexion->prepare($sqlOccupations);
-        $stmtOccupations->bindParam(':table_id', $table_id, PDO::PARAM_INT);
+        $stmtOccupations->bindParam(':room_id', $room_id, PDO::PARAM_INT);
         $stmtOccupations->execute();
 
-        // Eliminar la mesa de la tabla tbl_tables
-        $sqlTables = "DELETE FROM tbl_tables WHERE table_id = :table_id";
+        // 2. Eliminar todas las mesas de la sala
+        $sqlTables = "DELETE FROM tbl_tables WHERE room_id = :room_id";
         $stmtTables = $conexion->prepare($sqlTables);
-        $stmtTables->bindParam(':table_id', $table_id, PDO::PARAM_INT);
+        $stmtTables->bindParam(':room_id', $room_id, PDO::PARAM_INT);
         $stmtTables->execute();
 
-        // Eliminar la habitación en tbl_rooms si la mesa es la única en la habitación
-        $sqlCheckRoom = "SELECT room_id FROM tbl_tables WHERE table_id = :table_id";
-        $stmtCheckRoom = $conexion->prepare($sqlCheckRoom);
-        $stmtCheckRoom->bindParam(':table_id', $table_id, PDO::PARAM_INT);
-        $stmtCheckRoom->execute();
-
-        $room = $stmtCheckRoom->fetch(PDO::FETCH_ASSOC);
-
-        if ($room) {
-            $room_id = $room['room_id'];
-            // Verificar si la habitación tiene otras mesas asignadas
-            $sqlCheckOtherTables = "SELECT COUNT(*) AS count FROM tbl_tables WHERE room_id = :room_id";
-            $stmtCheckOtherTables = $conexion->prepare($sqlCheckOtherTables);
-            $stmtCheckOtherTables->bindParam(':room_id', $room_id, PDO::PARAM_INT);
-            $stmtCheckOtherTables->execute();
-            $result = $stmtCheckOtherTables->fetch(PDO::FETCH_ASSOC);
-
-            if ($result['count'] == 0) {
-                // Si no hay más mesas en la habitación, eliminar la habitación
-                $sqlDeleteRoom = "DELETE FROM tbl_rooms WHERE room_id = :room_id";
-                $stmtDeleteRoom = $conexion->prepare($sqlDeleteRoom);
-                $stmtDeleteRoom->bindParam(':room_id', $room_id, PDO::PARAM_INT);
-                $stmtDeleteRoom->execute();
-            }
-        }
+        // 3. Eliminar la sala de la tabla tbl_rooms
+        $sqlDeleteRoom = "DELETE FROM tbl_rooms WHERE room_id = :room_id";
+        $stmtDeleteRoom = $conexion->prepare($sqlDeleteRoom);
+        $stmtDeleteRoom->bindParam(':room_id', $room_id, PDO::PARAM_INT);
+        $stmtDeleteRoom->execute();
 
         // Confirmar la transacción
         $conexion->commit();
@@ -73,7 +53,8 @@ if (isset($_POST['table_id']) && is_numeric($_POST['table_id'])) {
         exit();
     }
 } else {
-    // Si no se ha enviado un table_id válido, redirigir con error
+    // Si no se ha enviado un room_id válido, redirigir con error
     header('Location: crudSalas.php?error=ID inválido');
     exit();
 }
+?>
