@@ -119,44 +119,47 @@ try {
 <body>
 <div class="container my-5">
     <h1 class="text-center texto-historial">Editar Usuario</h1>
-    <form action="update_user.php" method="POST">
-        <!-- ID del Usuario -->
-        <input type="hidden" name="user_id" value="<?php echo htmlspecialchars($user_id); ?>">
+    <form action="update_user.php" method="POST" onsubmit="return validarFormulario2()">
+    <!-- ID del Usuario -->
+    <input type="hidden" name="user_id" value="<?php echo htmlspecialchars($user_id); ?>">
 
-        <!-- Nombre de Usuario -->
-        <div class="form-group">
-            <label for="username" class="texto-historial">Nombre de Usuario:</label>
-            <input 
-                type="text" 
-                name="username" 
-                id="username" 
-                class="form-control" 
-                value="<?php echo htmlspecialchars($user['username']); ?>" 
-                required>
-        </div>
+    <!-- Nombre de Usuario -->
+    <div class="form-group">
+        <label for="username" class="texto-historial">Nombre de Usuario:</label>
+        <input 
+            type="text" 
+            name="username" 
+            id="usuario" 
+            class="form-control" 
+            value="<?php echo htmlspecialchars($user['username']); ?>" 
+            onblur="validaNombre()">
+        <div id="error-nombre" class="mensaje-error" style="color: red;"></div>
+    </div>
 
-        <!-- Rol del Usuario -->
-        <div class="form-group">
-            <label for="role_id" class="texto-historial">Rol:</label>
-            <select name="role_id" id="role_id" class="form-control" required>
-                <?php foreach ($roles as $role): ?>
-                    <option 
-                        value="<?php echo htmlspecialchars($role['role_id']); ?>" 
-                        <?php echo $role['role_id'] == $user['role_id'] ? 'selected' : ''; ?>>
-                        <?php echo htmlspecialchars($role['role_name']); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
+    <!-- Rol del Usuario -->
+    <div class="form-group">
+        <label for="role_id" class="texto-historial">Rol:</label>
+        <select name="role_id" id="role_id" class="form-control" required>
+            <?php foreach ($roles as $role): ?>
+                <option 
+                    value="<?php echo htmlspecialchars($role['role_id']); ?>" 
+                    <?php echo $role['role_id'] == $user['role_id'] ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($role['role_name']); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
 
-        <!-- Botones de Acción -->
-        <button type="submit" class="btn btn-primary">Actualizar</button>
-        <a href="usuarios.php" class="btn btn-secondary">Cancelar</a>
-    </form>
+    <!-- Botones de Acción -->
+    <button type="submit" class="btn btn-primary">Actualizar</button>
+    <a href="usuarios.php" class="btn btn-secondary">Cancelar</a>
+</form>
+
 </div>
 
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.10/dist/umd/popper.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="../../validaciones/validaciones.js"></script>
 </body>
 </html>

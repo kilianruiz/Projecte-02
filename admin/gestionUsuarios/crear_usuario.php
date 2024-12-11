@@ -64,17 +64,18 @@ try {
                         <h3>Registro de Usuarios</h3>
                     </div>
                     <div class="card-body">
-                        <form action="valida_crear_usuarios.php" method="POST">
+                        <form action="valida_crear_usuarios.php" method="POST" onsubmit="return validarFormulario()">
                             <!-- Nombre de Usuario -->
                             <div class="mb-3">
                                 <label for="username" class="form-label">Nombre de Usuario:</label>
                                 <input 
                                     type="text" 
                                     name="username" 
-                                    id="username" 
+                                    id="usuario" 
                                     class="form-control" 
                                     placeholder="Nombre de usuario" 
-                                    required>
+                                    onblur="validaNombre()">
+                                    <div id="error-nombre" class="mensaje-error" style="color: red;"></div>
                             </div>
 
                             <!-- Contraseña -->
@@ -86,7 +87,8 @@ try {
                                     id="password" 
                                     class="form-control" 
                                     placeholder="Contraseña" 
-                                    required>
+                                    onblur="validaContraseña()">
+                                    <div id="error_contraseña" class="mensaje-error" style="color: red;"></div>
                             </div>
 
                             <!-- Rol -->
@@ -113,5 +115,7 @@ try {
 
     <!-- Incluir Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../validaciones/validaciones.js"></script>
+
 </body>
 </html>

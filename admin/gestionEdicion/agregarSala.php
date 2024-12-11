@@ -108,8 +108,35 @@ include '../../salones/template.php'; // Incluimos la plantilla
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agregar Sala</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #a67c52; }
+        .top-bar { background-color: #8A5021; padding: 20px; margin-bottom: 20px; text-align: center; color: white; font-size: 1.5rem; font-weight: bold; }
+        .container { padding: 30px; margin-top: 20px; background-color: #8A5021; border-radius: 10px; color: white; }
+        .error-message { color: red; font-size: 0.9rem; }
+        .form-control, .form-select {
+            background-color: #a67c52;
+            border: 2px solid #6c3e18;
+            color: white;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: #a67c52;
+            border-color: white;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .form-control[readonly] {
+            background-color: #a67c52; 
+            color: white;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body>
+<div class="top-bar">
+        Añadir Sala
+        <a href="crudSalas.php" class="btn btn-primary">Volver</a>
+    </div>
     <div class="container mt-5">
         <h1>Crear Nueva Sala</h1>
 
@@ -119,37 +146,42 @@ include '../../salones/template.php'; // Incluimos la plantilla
         <?php } ?>
 
         <!-- Formulario para crear sala -->
-        <form method="POST" enctype="multipart/form-data">
+        <form method="POST" enctype="multipart/form-data" onsubmit="return validarFormulario3()">
             <input type="hidden" name="action" value="create_room">
             
             <div class="mb-3">
                 <label for="name_rooms" class="form-label">Nombre de Sala:</label>
-                <input type="text" name="name_rooms" id="name_rooms" class="form-control" placeholder="Nombre de la Sala" required>
+                <input type="text" name="name_rooms" id="name_rooms" class="form-control" placeholder="Nombre de la Sala">
+                <div id="name_rooms_error" class="error-message"></div>
             </div>
 
             <div class="mb-3">
                 <label for="capacity" class="form-label">Capacidad:</label>
-                <input type="number" name="capacity" id="capacity" class="form-control" placeholder="Capacidad" required>
+                <input type="number" name="capacity" id="capacity" class="form-control" placeholder="Capacidad">
+                <div id="capacity_error" class="error-message"></div>
             </div>
 
             <div class="mb-3">
                 <label for="description" class="form-label">Descripción:</label>
-                <textarea name="description" id="description" class="form-control" placeholder="Descripción de la Sala" required></textarea>
+                <textarea name="description" id="description" class="form-control" placeholder="Descripción de la Sala"></textarea>
+                <div id="description_error" class="error-message"></div>
             </div>
 
             <div class="mb-3">
                 <label for="roomtype" class="form-label">Tipo de Sala:</label>
-                <select name="roomtype" id="roomtype" class="form-select" required>
+                <select name="roomtype" id="roomtype" class="form-select" >
                     <?php foreach ($roomTypes as $type) { ?>
                         <option value="<?= $type ?>"><?= ucfirst($type) ?></option>
                     <?php } ?>
                 </select>
+                <div id="roomtype_error" class="error-message"></div>
             </div>
 
             <div class="mb-3">
                 <label for="image_file" class="form-label">Imagen de la Sala:</label>
                 <input type="file" name="image_file" id="image_file" class="form-control">
                 <small class="text-muted">Formatos permitidos: JPG, JPEG, PNG, GIF.</small>
+                <div id="image_file_error" class="error-message"></div>
             </div>
 
             <?php if (!empty($error)): ?>
@@ -159,7 +191,10 @@ include '../../salones/template.php'; // Incluimos la plantilla
             <button type="submit" class="btn btn-primary">Crear Sala</button>
         </form>
     </div>
-    
+
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../validaciones/validaciones.js"></script>
+
 </body>
 </html>

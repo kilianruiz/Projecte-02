@@ -95,9 +95,11 @@ try {
         }
     }
 
-    // Obtener lista de usuarios para el selector
-    $usuariosSql = "SELECT user_id, username FROM tbl_users";
-    $usuariosStmt = $conexion->query($usuariosSql);
+    // Obtener lista de usuarios, excluyendo al usuario actual de esta mesa
+    $usuariosSql = "SELECT user_id, username FROM tbl_users WHERE user_id != ?";
+    $usuariosStmt = $conexion->prepare($usuariosSql);
+    $usuariosStmt->bindParam(1, $occupacion['user_id'], PDO::PARAM_INT);
+    $usuariosStmt->execute();
     $usuarios = $usuariosStmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
@@ -208,8 +210,13 @@ try {
             <div class="form-group">
                 <label for="usuario" class="texto-historial">Usuario</label>
                 <select class="form-control" id="usuario" name="usuario" required>
+                    <!-- Usuario actual (no editable, solo muestra) -->
+                    <option value="<?= $occupacion['user_id'] ?>" selected>
+                        <?= htmlspecialchars($occupacion['username']) ?>
+                    </option>
+                    <!-- Usuarios disponibles para asignar -->
                     <?php foreach ($usuarios as $usuario): ?>
-                        <option value="<?= $usuario['user_id'] ?>" <?= $usuario['user_id'] == $occupacion['user_id'] ? 'selected' : '' ?>>
+                        <option value="<?= $usuario['user_id'] ?>">
                             <?= htmlspecialchars($usuario['username']) ?>
                         </option>
                     <?php endforeach; ?>

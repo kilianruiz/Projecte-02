@@ -157,9 +157,6 @@ $stmtMesas->execute();
     <div class="container">
         <!-- Botones para agregar mesa, sala y editar sala -->
         <div class="d-flex justify-content-between mb-4">
-            <a href="editarSala.php" class="btn btn-primary">
-                <i class="fas fa-edit"></i> Editar Sala
-            </a>
             <a href="agregarSala.php" class="btn btn-primary">
                 <i class="fas fa-plus-circle"></i> Agregar Sala
             </a>
