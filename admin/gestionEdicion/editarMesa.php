@@ -33,6 +33,11 @@ if (!$mesa) {
 $sqlSalas = "SELECT room_id, name_rooms FROM tbl_rooms";
 $stmtSalas = $conexion->query($sqlSalas);
 
+// Obtener el stock actual de sillas
+$sqlSillas = "SELECT chairs_in_warehouse FROM tbl_chairs_stock WHERE stock_id = 1";
+$stmtSillas = $conexion->query($sqlSillas);
+$sillasStock = $stmtSillas->fetch(PDO::FETCH_ASSOC);
+
 // Actualizar mesa
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $roomId = intval($_POST['room_id']);
@@ -75,9 +80,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ':table_id' => $tableId
     ]);
 
-    // Redirigir al CRUD con éxito
-    header("Location: crudMesas.php?success=1");
-    exit();
+    // Actualizar el stock de sillas
+    $stockSillas = $sillasStock['chairs_in_warehouse'];
+    $cantidadSillasMesa = $capacity;
+
+    // Calcular diferencia de sillas y actualizar stock
+    $diferenciaSillas = $cantidadSillasMesa - $mesa['capacity'];
+    $nuevoStockSillas = $stockSillas - $diferenciaSillas;
+
+    if ($nuevoStockSillas >= 0) {
+        // Actualizar el stock de sillas en el almacén
+        $sqlUpdateSillas = "
+            UPDATE tbl_chairs_stock
+            SET chairs_in_warehouse = :nuevo_stock
+            WHERE stock_id = 1
+        ";
+        $stmtUpdateSillas = $conexion->prepare($sqlUpdateSillas);
+        $stmtUpdateSillas->execute([':nuevo_stock' => $nuevoStockSillas]);
+
+        // Redirigir al CRUD con éxito
+        header("Location: crudMesas.php?success=1");
+        exit();
+    } else {
+        // Si el stock de sillas es insuficiente
+        header("Location: crudMesas.php?error=5");
+        exit();
+    }
 }
 ?>
 
