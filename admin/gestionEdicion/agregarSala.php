@@ -113,6 +113,8 @@ include '../../salones/template.php'; // Incluimos la plantilla
         .top-bar { background-color: #8A5021; padding: 20px; margin-bottom: 20px; text-align: center; color: white; font-size: 1.5rem; font-weight: bold; }
         .container { padding: 30px; margin-top: 20px; background-color: #8A5021; border-radius: 10px; color: white; }
         .error-message { color: red; font-size: 0.9rem; }
+        .btn-primary, .btn-warning, .btn-danger { background-color: #6c3e18; color: white; border: 2px solid white; }
+        .btn-primary:hover, .btn-warning:hover, .btn-danger:hover { background-color: #8A5021; border-color: white; }
         .form-control, .form-select {
             background-color: #a67c52;
             border: 2px solid #6c3e18;

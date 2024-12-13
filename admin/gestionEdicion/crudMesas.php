@@ -169,7 +169,6 @@ $stmtMesas->execute();
             </a>
         </div>
 
-
         <!-- Mensajes de éxito o error -->
         <?php if (isset($_GET['success'])) { ?>
             <div class="alert alert-success">Mesa añadida correctamente.</div>
@@ -243,12 +242,10 @@ $stmtMesas->execute();
                                         <i class="fas fa-edit"></i>
                                     </a>
 
-                                    <form action="eliminarMesa.php" method="POST" style="display:inline;">
-                                        <input type="hidden" name="table_id" value="<?= $mesa['table_id']; ?>">
-                                        <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de eliminar esta mesa?')">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </form>
+                                    <!-- Botón de eliminar con llamada a SweetAlert2 -->
+                                    <button type="button" class="btn btn-danger" onclick="confirmarEliminacion(<?= $mesa['table_id']; ?>)">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
                                 </td>
                             </tr>
                         <?php } 
@@ -277,6 +274,26 @@ $stmtMesas->execute();
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+    // Función para mostrar el SweetAlert2 de confirmación antes de eliminar la mesa
+    function confirmarEliminacion(tableId) {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "¡Esta acción eliminará esta mesa de forma permanente!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Redirigir a la página de eliminación pasando el ID de la mesa
+                window.location.href = 'eliminarMesa.php?id=' + tableId;
+            }
+        });
+    }
+    </script>
 </body>
 </html>

@@ -170,7 +170,7 @@ try {
                     <td>" . htmlspecialchars($role_name) . "</td>
                     <td>
                         <a href='edit_user_form.php?id=" . $row['user_id'] . "' class='btn btn-warning btn-sm'>Editar</a>
-                        <a href='eliminar_usuario.php?id=" . $row['user_id'] . "' class='btn btn-danger btn-sm' onclick='return confirm(\"¿Estás seguro de eliminar este usuario?\")'>Eliminar</a>
+                        <a href='#' class='btn btn-danger btn-sm' onclick='eliminarUsuario(" . $row['user_id'] . ")'>Eliminar</a>
                     </td>
                   </tr>";
         }
@@ -181,6 +181,30 @@ try {
     }
     ?>
 </div>
+
+<!-- Agregar SweetAlert2 para confirmación -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// Función para mostrar el SweetAlert de confirmación antes de eliminar el usuario
+function eliminarUsuario(userId) {
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Esta acción eliminará este usuario de forma permanente.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Si el usuario confirma, redirigir al script de eliminación
+            window.location.href = 'eliminar_usuario.php?id=' + userId;
+        }
+    });
+}
+</script>
 
 <script src="../validaciones/funciones.js"></script>
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

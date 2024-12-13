@@ -1,45 +1,37 @@
 <?php
 session_start();
 
-// Verificar si el ID de la sala está presente en la URL
 if (isset($_GET['room_id'])) {
     $roomId = $_GET['room_id'];
-
-    // Incluir el archivo de conexión
-    include('../conexion/conexion.php');  // Ajusta la ruta si el archivo `conexion.php` está en una carpeta diferente
-
-    // Verificar si la conexión a la base de datos es válida
+    include('../conexion/conexion.php');
+    
     if (!$conexion) {
         echo "Error de conexión a la base de datos.";
         exit();
     }
 
-    // Obtener la información de la sala seleccionada desde la base de datos
     $sql = "SELECT room_id, name_rooms FROM tbl_rooms WHERE room_id = :room_id";
     $stmt = $conexion->prepare($sql);
     $stmt->bindParam(':room_id', $roomId, PDO::PARAM_INT);
     $stmt->execute();
     $sala = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Si no se encuentra la sala, mostrar un mensaje de error
     if (!$sala) {
         echo "Sala no encontrada.";
         exit();
     }
 
-    // Obtener las mesas asociadas a la sala seleccionada
-    $sqlTables = "SELECT table_id, status FROM tbl_tables WHERE room_id = :room_id";  // Ahora filtramos por `room_id`
+    $sqlTables = "SELECT table_id, status FROM tbl_tables WHERE room_id = :room_id";
     $stmtTables = $conexion->prepare($sqlTables);
     $stmtTables->bindParam(':room_id', $roomId, PDO::PARAM_INT);
     $stmtTables->execute();
     $tables = $stmtTables->fetchAll(PDO::FETCH_ASSOC);
-
+    
 } else {
     echo "No se seleccionó ninguna sala.";
     exit();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -48,13 +40,12 @@ if (isset($_GET['room_id'])) {
     <title><?= htmlspecialchars($sala['name_rooms']) ?></title>
     <link rel="stylesheet" href="../styles.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sancreek&display=swap" rel="stylesheet">
     <style>
         .table {
             display: inline-block;
             margin: 10px;
             text-align: center;
-            width: 100px; /* Ajuste el tamaño de cada mesa */
+            width: 100px;
         }
         .table img {
             width: 100px;
@@ -64,79 +55,158 @@ if (isset($_GET['room_id'])) {
         }
         .table p {
             margin-top: 5px;
-            font-size: 1.1em;
         }
         .tables-container {
             display: flex;
             flex-wrap: wrap;
-            justify-content: space-between;
             gap: 15px;
         }
-        /* Asegura que cada fila tenga solo 4 mesas */
-        .tables-container > .table:nth-child(4n+1) {
-            clear: both;
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+        .modal.active {
+            display: block;
+        }
+        .modal .close {
+            float: right;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div><img src="../img/logo.webp" alt="Logo de la página" class="superpuesta"><br></div>
     <div class="container">
         <h1><?= htmlspecialchars($sala['name_rooms']) ?></h1>
 
         <div class="tables-container">
-            <?php
-            // Generar HTML para cada mesa en la sala seleccionada
-            foreach ($tables as $row) {
+            <?php foreach ($tables as $row): ?>
+                <?php
                 $tableId = $row['table_id'];
                 $status = $row['status'];
-                $romanTableId = romanNumerals($tableId); // Convertimos a números romanos
                 $imgSrc = ($status === 'occupied') ? '../img/salonRoja.webp' : '../img/salonVerde.webp';
-
-                echo "
-                <div class='table' id='mesa$tableId' onclick='openTableOptions($tableId, \"$status\", \"$romanTableId\")'>
-                    <img id='imgMesa$tableId' src='$imgSrc' alt='Mesa $tableId'>
-                    <p>Mesa $romanTableId</p>
+                ?>
+                <div class="table" onclick="openReservationModal(<?= $tableId ?>)">
+                    <img src="<?= $imgSrc ?>" alt="Mesa <?= $tableId ?>">
+                    <p>Mesa <?= $tableId ?></p>
                 </div>
-                ";
-            }
-            ?>
+            <?php endforeach; ?>
         </div>
 
-        <!-- Botón para volver a la página anterior -->
         <button class="logout-button" onclick="window.history.back()">Volver</button>
     </div>
 
-    <script src="../validaciones/funciones.js"></script>
-    <script src="../validaciones/funcionesPaginaPrincipal.js"></script>
-    <script src="../validaciones/funcionesSalones.js"></script>
+    <!-- Modal para gestionar reservas -->
+    <div id="reservationModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>Reservas de la mesa <span id="modalTableId"></span></h2>
+        <div id="reservationList"></div>
+        <form id="reservationForm" onsubmit="return saveReservation(event)">
+            <h3>Agregar nueva reserva</h3>
+            <input type="hidden" id="tableId" name="table_id">
+            <label>Nombre:</label>
+            <input type="text" id="customerName" name="customer_name" required>
+            <label>Fecha:</label>
+            <input type="date" id="reservationDate" name="reservation_date" required>
+            <label>Hora:</label>
+            <select id="reservationTime" name="reservation_time" required>
+                <option value="13:00">13:00</option>
+                <option value="15:00">15:00</option>
+                <option value="20:00">20:00</option>
+                <option value="22:00">22:00</option>
+            </select>
+            <button type="submit">Reservar</button>
+        </form>
+    </div>
+
+    <script>
+function openReservationModal(tableId) {
+    document.getElementById('reservationModal').classList.add('active');
+    document.getElementById('modalTableId').textContent = tableId;
+    document.getElementById('tableId').value = tableId;
+
+    // Llamada para obtener las reservas de la mesa
+    fetch(`./getReservations.php?table_id=${tableId}`)
+        .then(response => response.json())
+        .then(data => {
+            const reservationList = document.getElementById('reservationList');
+            reservationList.innerHTML = ''; // Limpiar la lista de reservas antes de agregar nuevas
+
+            if (data.error) {
+                reservationList.innerHTML = `<p>Error al cargar las reservas: ${data.error}</p>`;
+            } else {
+                reservationList.innerHTML = '<ul>';
+                data.forEach(reservation => {
+                    reservationList.innerHTML += `<li>${reservation.customer_name} - ${reservation.reservation_date} ${reservation.reservation_time}</li>`;
+                });
+                reservationList.innerHTML += '</ul>';
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar las reservas:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al cargar las reservas',
+                text: 'No se pudo cargar la lista de reservas. Inténtalo nuevamente.',
+            });
+        });
+}
+
+
+        function closeModal() {
+            document.getElementById('reservationModal').classList.remove('active');
+        }
+
+        function saveReservation(event) {
+    event.preventDefault();
+    const formData = new FormData(document.getElementById('reservationForm'));
+    
+    fetch('./saveReservations.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())  // Cambiado a .json() para manejar respuestas JSON
+    .then(data => {
+        if (data.status === 'success') {
+            Swal.fire({
+                icon: 'success',
+                title: 'Reserva guardada',
+                text: data.message,
+            });
+            closeModal();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'No se pudo guardar la reserva. Inténtalo nuevamente.',
+            });
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo guardar la reserva. Inténtalo nuevamente.',
+        });
+    });
+}
+
+
+        // Validaciones de fecha para prevenir selecciones inválidas
+        document.addEventListener('DOMContentLoaded', function () {
+            const dateInput = document.querySelector('#reservationDate');
+
+            if (dateInput) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.setAttribute('min', today);
+            }
+        });
+    </script>
 </body>
 </html>
-
-<?php
-// Función para convertir un número entero a un número romano
-function romanNumerals($number) {
-    $map = [
-        'M' => 1000,
-        'CM' => 900,
-        'D' => 500,
-        'CD' => 400,
-        'C' => 100,
-        'XC' => 90,
-        'L' => 50,
-        'XL' => 40,
-        'X' => 10,
-        'IX' => 9,
-        'V' => 5,
-        'IV' => 4,
-        'I' => 1
-    ];
-    $result = '';
-    foreach ($map as $roman => $int) {
-        while ($number >= $int) {
-            $result .= $roman;
-            $number -= $int;
-        }
-    }
-    return $result;
-}
-?>

@@ -110,59 +110,59 @@ VALUES
 -- Insertar mesas en la tabla de mesas (70 ocupadas, 10 libres)
 INSERT INTO tbl_tables (room_id, table_number, capacity, status) VALUES
 -- Terraza 1
-(1, 1, 4, 'occupied'),
-(1, 2, 4, 'occupied'),
-(1, 3, 4, 'occupied'),
-(1, 4, 4, 'occupied'),
-(1, 5, 4, 'occupied'),
+(1, 1, 4, 'free'),
+(1, 2, 4, 'free'),
+(1, 3, 4, 'free'),
+(1, 4, 4, 'free'),
+(1, 5, 4, 'free'),
 
 -- Terraza 2
-(2, 1, 4, 'occupied'),
-(2, 2, 4, 'occupied'),
-(2, 3, 4, 'occupied'),
-(2, 4, 4, 'occupied'),
-(2, 5, 4, 'occupied'),
-(2, 6, 4, 'occupied'),
-(2, 7, 4, 'occupied'),
-(2, 8, 4, 'occupied'),
-(2, 9, 4, 'occupied'),
-(2, 10, 4, 'occupied'),
+(2, 1, 4, 'free'),
+(2, 2, 4, 'free'),
+(2, 3, 4, 'free'),
+(2, 4, 4, 'free'),
+(2, 5, 4, 'free'),
+(2, 6, 4, 'free'),
+(2, 7, 4, 'free'),
+(2, 8, 4, 'free'),
+(2, 9, 4, 'free'),
+(2, 10, 4, 'free'),
 
 -- Terraza 3
-(3, 1, 4, 'occupied'),
-(3, 2, 4, 'occupied'),
-(3, 3, 4, 'occupied'),
-(3, 4, 4, 'occupied'),
-(3, 5, 4, 'occupied'),
+(3, 1, 4, 'free'),
+(3, 2, 4, 'free'),
+(3, 3, 4, 'free'),
+(3, 4, 4, 'free'),
+(3, 5, 4, 'free'),
 
 -- Salon 1
-(4, 1, 6, 'occupied'),
-(4, 2, 6, 'occupied'),
-(4, 3, 6, 'occupied'),
-(4, 4, 6, 'occupied'),
-(4, 5, 6, 'occupied'),
-(4, 6, 6, 'occupied'),
-(4, 7, 6, 'occupied'),
-(4, 8, 6, 'occupied'),
-(4, 9, 6, 'occupied'),
-(4, 10, 6, 'occupied'),
+(4, 1, 6, 'free'),
+(4, 2, 6, 'free'),
+(4, 3, 6, 'free'),
+(4, 4, 6, 'free'),
+(4, 5, 6, 'free'),
+(4, 6, 6, 'free'),
+(4, 7, 6, 'free'),
+(4, 8, 6, 'free'),
+(4, 9, 6, 'free'),
+(4, 10, 6, 'free'),
 
 -- Salon 2
-(5, 1, 8, 'occupied'),
-(5, 2, 8, 'occupied'),
-(5, 3, 8, 'occupied'),
-(5, 4, 8, 'occupied'),
-(5, 5, 8, 'occupied'),
-(5, 6, 8, 'occupied'),
-(5, 7, 8, 'occupied'),
-(5, 8, 8, 'occupied'),
-(5, 9, 8, 'occupied'),
-(5, 10, 8, 'occupied'),
-(5, 11, 8, 'occupied'),
-(5, 12, 8, 'occupied'),
-(5, 13, 8, 'occupied'),
-(5, 14, 8, 'occupied'),
-(5, 15, 8, 'occupied'),
+(5, 1, 8, 'free'),
+(5, 2, 8, 'free'),
+(5, 3, 8, 'free'),
+(5, 4, 8, 'free'),
+(5, 5, 8, 'free'),
+(5, 6, 8, 'free'),
+(5, 7, 8, 'free'),
+(5, 8, 8, 'free'),
+(5, 9, 8, 'free'),
+(5, 10, 8, 'free'),
+(5, 11, 8, 'free'),
+(5, 12, 8, 'free'),
+(5, 13, 8, 'free'),
+(5, 14, 8, 'free'),
+(5, 15, 8, 'free'),
 
 -- Sala Privada 1
 (6, 1, 2, 'free'),
@@ -202,8 +202,25 @@ UPDATE tbl_chairs_stock
 SET chairs_in_warehouse = 44 
 WHERE stock_id = 1;
 
--- Actualizar el estado de las mesas a 'free' y limpiar la columna 'occupied_since'
-UPDATE tbl_tables
-SET status = 'free',
-    occupied_since = NULL;
+CREATE TABLE tbl_reservations (
+    reservation_id INT PRIMARY KEY AUTO_INCREMENT,
+    table_id INT NOT NULL,
+    customer_name VARCHAR(100) NOT NULL,
+    reservation_date DATE NOT NULL,
+    reservation_time TIME NOT NULL,
+    people_count INT NOT NULL,
+    FOREIGN KEY (table_id) REFERENCES tbl_tables(table_id) ON DELETE CASCADE
+);
 
+ALTER TABLE tbl_tables 
+DROP COLUMN occupied_since;
+
+-- Añadir un estado más general para las mesas
+ALTER TABLE tbl_tables 
+MODIFY COLUMN status ENUM('free', 'reserved', 'occupied') DEFAULT 'free';
+
+INSERT INTO tbl_reservations (table_id, customer_name, reservation_date, reservation_time, people_count)
+VALUES
+(1, 'Juan Pérez', '2024-12-20', '12:30:00', 4),
+(1, 'María López', '2024-12-20', '15:00:00', 2),
+(2, 'Carlos García', '2024-12-21', '13:00:00', 5);

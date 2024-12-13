@@ -40,6 +40,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["table_id"])) {
         $stmtUpdateChairs = $conexion->prepare($sqlUpdateChairs);
         $stmtUpdateChairs->execute([':capacity' => $capacity]);
 
+        $sqlUpdateTables = "
+        UPDATE tbl_tables_stock 
+        SET tables_in_warehouse = tables_in_warehouse + 1";  // Aumento por una mesa (no por la capacidad)
+        $stmtUpdateTables = $conexion->prepare($sqlUpdateTables);
+        $stmtUpdateTables->execute();
+
         // Eliminar la mesa
         $sqlDeleteTable = "DELETE FROM tbl_tables WHERE table_id = :table_id";
         $stmtDeleteTable = $conexion->prepare($sqlDeleteTable);

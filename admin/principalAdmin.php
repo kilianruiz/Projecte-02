@@ -57,13 +57,9 @@ if (!isset($conexion)) {
         </div>
         <button class="logout-button" onclick="logout()">Cerrar Sesión</button>
     </div>
-    <script>
-        function logout() {
-            window.location.href = "../cerrarSesion/logout.php";
-        }
-    </script>
 
-    <script src="./validaciones/funciones.js"></script>
+
+    <script src="../validaciones/funciones.js"></script>
     <script src="./validaciones/funcionesPaginaPrincipal.js"></script>
 
 </body>

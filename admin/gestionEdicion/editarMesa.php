@@ -155,6 +155,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: white;
             cursor: not-allowed;
         }
+        .btn-primary, .btn-warning, .btn-danger { background-color: #6c3e18; color: white; border: 2px solid white; }
+        .btn-primary:hover, .btn-warning:hover, .btn-danger:hover { background-color: #8A5021; border-color: white; }
     </style>
 </head>
 <body>
@@ -205,8 +207,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
                 <div id="image_path_error" class="error-message"></div>
             </div>
-            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-            <a href="crudMesas.php" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary mt-3">Guardar Cambios</button>
+            <a href="crudMesas.php" class="btn btn-primary mt-3">Cancelar</a>
         </form>
     </div>
     <script src="../../validaciones/validaciones.js"></script>
