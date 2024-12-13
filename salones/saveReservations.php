@@ -16,12 +16,24 @@ if (
 }
 
 $tableId = $_POST['table_id'];
+$customerName = $_POST['customer_name'];
 $reservationDate = $_POST['reservation_date'];
 $reservationTime = $_POST['reservation_time'];
 
-// Verificar si ya existe una reserva en esa fecha y hora para la misma mesa
 try {
-    // Buscar reservas previas para la misma mesa y franja horaria
+    // Comprobar si la reserva es para hoy y la hora ya ha pasado
+    $currentDate = date('Y-m-d');
+    $currentTime = date('H:i');
+    
+    if ($reservationDate === $currentDate && $reservationTime <= $currentTime) {
+        echo json_encode([
+            "status" => "error",
+            "message" => "No puedes reservar en una hora que ya ha pasado."
+        ]);
+        exit();
+    }
+
+    // Verificar si ya existe una reserva en esa fecha y hora para la misma mesa
     $stmt = $conexion->prepare("SELECT COUNT(*) FROM tbl_reservations 
                                 WHERE table_id = :table_id 
                                 AND reservation_date = :reservation_date 
@@ -31,11 +43,9 @@ try {
     $stmt->bindParam(':reservation_time', $reservationTime, PDO::PARAM_STR);
     $stmt->execute();
 
-    // Comprobar si ya hay una reserva existente
     $existingReservations = $stmt->fetchColumn();
-    
+
     if ($existingReservations > 0) {
-        // Si ya existe una reserva, no permitir el insert
         echo json_encode([
             "status" => "error",
             "message" => "Ya existe una reserva para esa mesa en esa fecha y hora."
@@ -43,11 +53,11 @@ try {
         exit();
     }
 
-    // Si no existe una reserva, hacer el insert
+    // Insertar la nueva reserva
     $stmt = $conexion->prepare("INSERT INTO tbl_reservations (table_id, customer_name, reservation_date, reservation_time) 
                                 VALUES (:table_id, :customer_name, :reservation_date, :reservation_time)");
     $stmt->bindParam(':table_id', $tableId, PDO::PARAM_INT);
-    $stmt->bindParam(':customer_name', $_POST['customer_name'], PDO::PARAM_STR);
+    $stmt->bindParam(':customer_name', $customerName, PDO::PARAM_STR);
     $stmt->bindParam(':reservation_date', $reservationDate, PDO::PARAM_STR);
     $stmt->bindParam(':reservation_time', $reservationTime, PDO::PARAM_STR);
     $stmt->execute();

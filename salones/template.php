@@ -60,25 +60,98 @@ if (isset($_GET['room_id'])) {
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-        }
-        .modal.active {
-            display: block;
-        }
-        .modal .close {
-            float: right;
-            cursor: pointer;
-        }
+        }.modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #A67C52; /* Marrón clarito */
+    color: #FFFFFF; /* Letras blancas */
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25); /* Sombra suave */
+    width: 80%;
+    max-width: 500px;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal.active {
+    display: block;
+}
+
+.modal .close {
+    float: right;
+    font-size: 20px;
+    font-weight: bold;
+    color: #FFFFFF; /* Blanco */
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.modal .close:hover {
+    color: #FFD1C1; /* Color más claro para el hover */
+}
+
+.modal h2,
+.modal h3 {
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #FFFFFF; /* Blanco */
+}
+
+#reservationForm label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #FFFFFF; /* Blanco */
+    margin-top: 10px;
+    display: block;
+}
+
+#reservationForm input,
+#reservationForm select {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0 15px;
+    border: 1px solid #6c3e18;
+    border-radius: 5px;
+    font-size: 14px;
+    background: #FFFFFF; /* Fondo blanco */
+    color: #333333; /* Texto oscuro */
+}
+
+#reservationForm button {
+    background: #6c3e18;
+    color: #FFFFFF;
+    font-size: 16px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+#reservationForm button:hover {
+    background: #8A5021;
+}
+
+#reservationList ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 10px 0;
+}
+
+#reservationList li {
+    background: #8A5021; /* Marrón oscuro */
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #FFFFFF; /* Blanco */
+}
+
+
     </style>
 </head>
 <body>
