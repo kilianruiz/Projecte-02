@@ -1,5 +1,5 @@
 <?php
-$roomName = 'prueba';
-$roomId = 14;
+$roomName = 'Salón 3';
+$roomId = 15;
 include '../../salones/template.php'; // Incluimos la plantilla
 ?>

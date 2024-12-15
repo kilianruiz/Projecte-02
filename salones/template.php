@@ -61,21 +61,21 @@ if (isset($_GET['room_id'])) {
             flex-wrap: wrap;
             gap: 15px;
         }.modal {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #A67C52; /* Marrón clarito */
-    color: #FFFFFF; /* Letras blancas */
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25); /* Sombra suave */
-    width: 80%;
-    max-width: 500px;
-    z-index: 1000;
-    animation: fadeIn 0.3s ease-in-out;
-}
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #A67C52; /* Marrón clarito */
+            color: #FFFFFF; /* Letras blancas */
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25); /* Sombra suave */
+            width: 80%;
+            max-width: 500px;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-in-out;
+        }
 
 .modal.active {
     display: block;
