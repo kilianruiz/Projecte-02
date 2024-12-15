@@ -43,7 +43,7 @@ if (isset($_POST['room_id']) && is_numeric($_POST['room_id'])) {
         $conexion->commit();
 
         // Redirigir con mensaje de éxito
-        header('Location: crudSalas.php?success=1');
+        header('Location: crudSalas.php');
         exit();
     } catch (Exception $e) {
         // Si ocurre algún error, revertir la transacción

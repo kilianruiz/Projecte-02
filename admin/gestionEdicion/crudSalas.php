@@ -83,6 +83,7 @@ $stmtMesas->execute();
     <title>Administración de Mesas - Restaurante</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { background-color: #a67c52; }
         .top-bar { background-color: #8A5021; padding: 20px; margin-bottom: 20px; text-align: center; color: white; font-size: 1.5rem; font-weight: bold; }
@@ -146,7 +147,6 @@ $stmtMesas->execute();
         input::placeholder, select::placeholder {
             color: white;
         }
-
     </style>
 </head>
 <body>
@@ -221,7 +221,7 @@ $stmtMesas->execute();
 
                                     <form action="eliminarSala.php" method="POST" style="display:inline;">
                                         <input type="hidden" name="room_id" value="<?= $mesa['room_id']; ?>">
-                                        <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de eliminar esta sala?')">
+                                        <button type="button" class="btn btn-danger" onclick="confirmarEliminacion(<?= $mesa['room_id']; ?>)">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </form>
@@ -255,5 +255,35 @@ $stmtMesas->execute();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Función para mostrar el SweetAlert de confirmación antes de eliminar
+        function confirmarEliminacion(roomId) {
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "¡Esta acción no se puede deshacer!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Si el usuario confirma, enviamos el formulario de eliminación
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = 'eliminarSala.php'; // Acción para el archivo de eliminación
+
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'room_id';
+                    input.value = roomId;
+
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();  // Enviar el formulario para eliminar la sala
+                }
+            });
+        }
+    </script>
 </body>
 </html>

@@ -246,7 +246,7 @@ $usuarios = $usuariosStmt->fetchAll(PDO::FETCH_COLUMN);
         function confirmarEliminacion(reservationId) {
             Swal.fire({
                 title: '¿Estás seguro?',
-                text: "Esta acción eliminará la reserva y todas sus relaciones.",
+                text: "Esta acción eliminará la reserva.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',

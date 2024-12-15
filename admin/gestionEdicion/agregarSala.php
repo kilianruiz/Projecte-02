@@ -108,6 +108,7 @@ include '../../salones/template.php'; // Incluimos la plantilla
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agregar Sala</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { background-color: #a67c52; }
         .top-bar { background-color: #8A5021; padding: 20px; margin-bottom: 20px; text-align: center; color: white; font-size: 1.5rem; font-weight: bold; }
@@ -148,7 +149,7 @@ include '../../salones/template.php'; // Incluimos la plantilla
         <?php } ?>
 
         <!-- Formulario para crear sala -->
-        <form method="POST" enctype="multipart/form-data" onsubmit="return validarFormulario3()">
+        <form method="POST" enctype="multipart/form-data" onsubmit="return validarFormulario()">
             <input type="hidden" name="action" value="create_room">
             
             <div class="mb-3">
@@ -194,9 +195,68 @@ include '../../salones/template.php'; // Incluimos la plantilla
         </form>
     </div>
 
+    <script>
+        function validarFormulario() {
+            let errors = false;
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../../validaciones/validaciones.js"></script>
+            // Verificar Nombre de la Sala
+            const nameRooms = document.getElementById('name_rooms').value;
+            if (nameRooms === "") {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Por favor, ingrese el nombre de la sala.'
+                });
+                errors = true;
+            }
+
+            // Verificar Capacidad
+            const capacity = document.getElementById('capacity').value;
+            if (capacity === "") {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Por favor, ingrese la capacidad de la sala.'
+                });
+                errors = true;
+            }
+
+            // Verificar Descripción
+            const description = document.getElementById('description').value;
+            if (description === "") {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Por favor, ingrese una descripción de la sala.'
+                });
+                errors = true;
+            }
+
+            // Verificar Tipo de Sala
+            const roomType = document.getElementById('roomtype').value;
+            if (roomType === "") {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Por favor, seleccione el tipo de sala.'
+                });
+                errors = true;
+            }
+
+            // Verificar Imagen
+            const imageFile = document.getElementById('image_file').files.length;
+            if (imageFile === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Por favor, cargue una imagen para la sala.'
+                });
+                errors = true;
+            }
+
+            return !errors;
+        }
+    </script>
 
 </body>
 </html>

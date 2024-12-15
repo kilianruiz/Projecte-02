@@ -64,4 +64,3 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["table_id"])) {
     header('Location: crudMesas.php?error=solicitud_invalida');
     exit();
 }
-?>

@@ -242,10 +242,13 @@ $stmtMesas->execute();
                                         <i class="fas fa-edit"></i>
                                     </a>
 
-                                    <!-- Botón de eliminar con llamada a SweetAlert2 -->
-                                    <button type="button" class="btn btn-danger" onclick="confirmarEliminacion(<?= $mesa['table_id']; ?>)">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
+                                    <!-- Botón de eliminar con formulario POST y SweetAlert2 -->
+                                    <form action="eliminarMesa.php" method="POST" style="display:inline;">
+                                        <input type="hidden" name="table_id" value="<?= $mesa['table_id']; ?>">
+                                        <button type="button" class="btn btn-danger" onclick="confirmarEliminacion(<?= $mesa['table_id']; ?>)">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php } 
@@ -275,7 +278,7 @@ $stmtMesas->execute();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
+<script>
     // Función para mostrar el SweetAlert2 de confirmación antes de eliminar la mesa
     function confirmarEliminacion(tableId) {
         Swal.fire({
@@ -289,11 +292,23 @@ $stmtMesas->execute();
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Redirigir a la página de eliminación pasando el ID de la mesa
-                window.location.href = 'eliminarMesa.php?id=' + tableId;
+                // Si el usuario confirma, enviamos el formulario
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'eliminarMesa.php';
+
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'table_id';
+                input.value = tableId;
+
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
             }
         });
     }
-    </script>
+</script>
+
 </body>
 </html>

@@ -119,6 +119,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Añadir Mesa</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Incluir SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { background-color: #a67c52; }
         .top-bar { background-color: #8A5021; padding: 20px; margin-bottom: 20px; text-align: center; color: white; font-size: 1.5rem; font-weight: bold; }
@@ -204,6 +206,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             <?php } ?>
         </form>
     </div>
-    <script src="../../validaciones/validaciones.js"></script>
+
+    <script>
+        // Función para validar el formulario antes de enviarlo
+        function validarFormulario() {
+            // Limpiar mensajes de error anteriores
+            let errors = false;
+
+            // Verificar Sala
+            const roomId = document.getElementById('room_id').value;
+            if (roomId === "") {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Por favor, seleccione una sala.'
+                });
+                errors = true;
+            }
+
+            // Verificar Número de Mesa
+            const tableNumber = document.getElementById('table_number').value;
+            if (tableNumber === "") {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Por favor, ingrese un número de mesa.'
+                });
+                errors = true;
+            }
+
+            // Verificar Capacidad
+            const capacity = document.getElementById('capacity').value;
+            if (capacity === "") {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Por favor, ingrese la capacidad de la mesa.'
+                });
+                errors = true;
+            }
+
+            // Verificar Estado
+            const status = document.getElementById('status').value;
+            if (status === "") {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Por favor, seleccione el estado de la mesa.'
+                });
+                errors = true;
+            }
+
+            // Si hay errores, no enviar el formulario
+            return !errors;
+        }
+    </script>
 </body>
 </html>

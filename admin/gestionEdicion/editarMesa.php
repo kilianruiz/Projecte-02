@@ -35,7 +35,7 @@ $stmtSalas = $conexion->query($sqlSalas);
 
 // Obtener el stock actual de sillas
 $sqlSillas = "SELECT chairs_in_warehouse FROM tbl_chairs_stock WHERE stock_id = 1";
-$stmtSillas = $conexion->query($sqlSillas);
+$stmtSillas = $stmtSillas = $conexion->query($sqlSillas);
 $sillasStock = $stmtSillas->fetch(PDO::FETCH_ASSOC);
 
 // Actualizar mesa
@@ -125,7 +125,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<!-- HTML con el mensaje de error si existe un conflicto en el número de mesa -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -133,42 +132,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Mesa</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { background-color: #a67c52; }
-        .top-bar { background-color: #8A5021; padding: 20px; margin-bottom: 20px; text-align: center; color: white; font-size: 1.5rem; font-weight: bold; }
         .container { padding: 30px; margin-top: 20px; background-color: #8A5021; border-radius: 10px; color: white; }
-        .error-message { color: red; font-size: 0.9rem; }
         .form-control, .form-select {
             background-color: #a67c52;
             border: 2px solid #6c3e18;
             color: white;
         }
-
         .form-control:focus, .form-select:focus {
             background-color: #a67c52;
             border-color: white;
             box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
         }
-
-        .form-control[readonly] {
-            background-color: #a67c52; 
-            color: white;
-            cursor: not-allowed;
-        }
-        .btn-primary, .btn-warning, .btn-danger { background-color: #6c3e18; color: white; border: 2px solid white; }
-        .btn-primary:hover, .btn-warning:hover, .btn-danger:hover { background-color: #8A5021; border-color: white; }
+        .btn-primary { background-color: #6c3e18; color: white; border: 2px solid white; }
+        .btn-primary:hover { background-color: #8A5021; border-color: white; }
     </style>
 </head>
 <body>
     <div class="container mt-5">
         <h1>Editar Mesa</h1>
-        <!-- Mensaje de error si el número de mesa ya existe -->
-        <?php if (isset($_GET['error']) && $_GET['error'] == 6): ?>
-            <div class="alert alert-danger mt-3" role="alert">
-                El número de mesa que estás intentando asignar ya existe en esta sala. Por favor, elige otro número.
-            </div>
-        <?php endif; ?>
-        
         <form method="POST" enctype="multipart/form-data" onsubmit="return validarFormulario()">
             <div class="mb-3">
                 <label for="room_id" class="form-label">Sala</label>
@@ -179,17 +163,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </option>
                     <?php } ?>
                 </select>
-                <div id="room_id_error" class="error-message"></div>
             </div>
             <div class="mb-3">
                 <label for="table_number" class="form-label">Número de Mesa</label>
-                <input type="number" name="table_number" id="table_number" class="form-control" value="<?= htmlspecialchars($mesa['table_number']); ?>" >
-                <div id="table_number_error" class="error-message"></div>
+                <input type="number" name="table_number" id="table_number" class="form-control" value="<?= htmlspecialchars($mesa['table_number']); ?>">
             </div>
             <div class="mb-3">
                 <label for="capacity" class="form-label">Capacidad</label>
-                <input type="number" name="capacity" id="capacity" class="form-control" value="<?= htmlspecialchars($mesa['capacity']); ?>" >
-                <div id="capacity_error" class="error-message"></div>
+                <input type="number" name="capacity" id="capacity" class="form-control" value="<?= htmlspecialchars($mesa['capacity']); ?>">
             </div>
             <div class="mb-3">
                 <label for="status" class="form-label">Estado</label>
@@ -197,7 +178,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <option value="free" <?= $mesa['status'] === 'free' ? 'selected' : ''; ?>>Libre</option>
                     <option value="occupied" <?= $mesa['status'] === 'occupied' ? 'selected' : ''; ?>>Ocupada</option>
                 </select>
-                <div id="status_error" class="error-message"></div>
             </div>
             <div class="mb-3">
                 <label for="image" class="form-label">Imagen</label>
@@ -205,12 +185,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php if (!empty($mesa['image_path'])): ?>
                     <img src="../../<?= htmlspecialchars($mesa['image_path']); ?>" alt="Mesa" class="mt-3 img-thumbnail" style="max-width: 200px;">
                 <?php endif; ?>
-                <div id="image_path_error" class="error-message"></div>
             </div>
             <button type="submit" class="btn btn-primary mt-3">Guardar Cambios</button>
             <a href="crudMesas.php" class="btn btn-primary mt-3">Cancelar</a>
         </form>
     </div>
-    <script src="../../validaciones/validaciones.js"></script>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+
+        if (error === '6') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'El número de mesa ya existe en esta sala. Por favor, elige otro número.',
+                confirmButtonColor: '#6c3e18'
+            }).then(() => {
+                window.history.replaceState(null, null, window.location.pathname);
+            });
+        }
+    </script>
 </body>
 </html>
