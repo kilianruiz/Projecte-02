@@ -115,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmtUpdateSillas->execute([':nuevo_stock' => $nuevoStockSillas]);
 
         // Redirigir al CRUD con éxito
-        header("Location: crudMesas.php?success=1");
+        header("Location: crudMesas.php");
         exit();
     } else {
         // Si el stock de sillas es insuficiente

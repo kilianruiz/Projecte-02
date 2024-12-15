@@ -98,55 +98,12 @@ $stmtMesas->execute();
         .table tbody { background-color: #8A5021; }
         .table tbody tr:hover { background-color: #6c3e18; color: white; }
         .table img { width: 100px; height: 70px; }
-
-        /* Estilos para la paginación */
-        .pagination {
-            margin-top: 20px;
-        }
-        .pagination .page-item.active .page-link {
-            background-color: #6c3e18;
-            border-color: #6c3e18;
-        }
-        .pagination .page-item .page-link {
-            background-color: #a67c52;
-            border-color: #8A5021;
-            color: white;
-        }
-        .pagination .page-item .page-link:hover {
-            background-color: #8A5021;
-            border-color: #6c3e18;
-            color: white;
-        }
-        .form-select{
-            background-color: #a67c52;
-            color: white;
-            border: 2px solid #8A5021;
-        }
-        /* Estilo para el selector de registros por página */
-        .form-inline select, .form-inline input[type="number"] {
-            background-color: #a67c52;
-            color: white;
-            border: 2px solid #8A5021;
-        }
-        .form-inline select:hover, .form-inline input[type="number"]:hover {
-            background-color: #8A5021;
-            border-color: #6c3e18;
-        }
-
-        /* Estilo para el botón eliminar */
-        .btn-danger {
-            background-color: #d33;
-            border-color: #d33;
-        }
-        .btn-danger:hover {
-            background-color: #a02a2a;
-            border-color: #a02a2a;
-        }
-
-        /* Cambiar color del texto del placeholder a blanco */
-        input::placeholder, select::placeholder {
-            color: white;
-        }
+        .pagination { margin-top: 20px; }
+        .pagination .page-item.active .page-link { background-color: #6c3e18; border-color: #6c3e18; }
+        .pagination .page-item .page-link { background-color: #a67c52; border-color: #8A5021; color: white; }
+        .pagination .page-item .page-link:hover { background-color: #8A5021; border-color: #6c3e18; color: white; }
+        .form-select { background-color: #a67c52; color: white; border: 2px solid #8A5021; }
+        input::placeholder, select::placeholder { color: white; }
     </style>
 </head>
 <body>
@@ -155,30 +112,27 @@ $stmtMesas->execute();
         <a href="../principalAdmin.php" class="btn btn-primary">Volver</a>
     </div>
     <div class="container">
-        <!-- Botones para agregar mesa, sala y editar sala -->
         <div class="d-flex justify-content-between mb-4">
             <a href="agregarSala.php" class="btn btn-primary">
                 <i class="fas fa-plus-circle"></i> Agregar Sala
             </a>
         </div>
 
-        <!-- Mensajes de éxito o error -->
         <?php if (isset($_GET['success'])) { ?>
             <div class="alert alert-success">Mesa añadida correctamente.</div>
         <?php } elseif (isset($_GET['errors'])) { ?>
             <div class="alert alert-danger"><?= nl2br(htmlspecialchars($_GET['errors'])); ?></div>
         <?php } ?>
 
-        <!-- Filtro de Mesas -->
         <div class="mt-4">
             <h3>Filtrar Salas</h3>
             <form class="form-inline" method="POST">
                 <input type="text" name="name_rooms" class="form-select" placeholder="Buscar por nombre de sala" value="<?= isset($_POST['name_rooms']) ? htmlspecialchars($_POST['name_rooms']) : ''; ?>">
                 <button type="submit" class="btn btn-warning">Filtrar</button>
+                <button type="button" class="btn btn-primary" onclick="limpiarFiltros()"><i class="fas fa-trash"></i></button>
             </form>
         </div>
 
-        <!-- Selección de registros por página -->
         <form method="POST" class="mb-3">
             <label for="recordsPerPage" class="me-2">Registros por página:</label>
             <select name="recordsPerPage" id="recordsPerPage" class="form-select w-auto d-inline" onchange="this.form.submit();">
@@ -188,7 +142,6 @@ $stmtMesas->execute();
             </select>
         </form>
 
-        <!-- Tabla de Mesas -->
         <div>
             <table class="table">
                 <thead>
@@ -209,7 +162,7 @@ $stmtMesas->execute();
                                 <td><?= htmlspecialchars($mesa['description']); ?></td>
                                 <td>
                                     <?php if (!empty($mesa['image_path'])) { ?>
-                                        <img src="../../<?= htmlspecialchars($mesa['image_path']); ?>" alt="Mesa" class="mt-3 img-thumbnail" style="max-width: 400px; max-height: 300px; object-fit: cover;">
+                                        <img src="../../<?= htmlspecialchars($mesa['image_path']); ?>" alt="Sala" class="mt-3 img-thumbnail" style="max-width: 400px; max-height: 300px; object-fit: cover;">
                                     <?php } else { ?>
                                         Sin Imagen
                                     <?php } ?>
@@ -218,26 +171,19 @@ $stmtMesas->execute();
                                     <a href="editarSala.php?id=<?= $mesa['room_id']; ?>" class="btn btn-warning">
                                         <i class="fas fa-edit"></i>
                                     </a>
-
-                                    <form action="eliminarSala.php" method="POST" style="display:inline;">
-                                        <input type="hidden" name="room_id" value="<?= $mesa['room_id']; ?>">
-                                        <button type="button" class="btn btn-danger" onclick="confirmarEliminacion(<?= $mesa['room_id']; ?>)">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </form>
-
+                                    <button type="button" class="btn btn-danger" onclick="confirmarEliminacion(<?= $mesa['room_id']; ?>)">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
                                 </td>
                             </tr>
                         <?php } 
                     } else { ?>
                         <tr>
-                            <td colspan="6" class="text-center">No hay mesas disponibles.</td>
+                            <td colspan="6" class="text-center">No hay salas disponibles.</td>
                         </tr>
                     <?php } ?>
                 </tbody>
             </table>
-
-            <!-- Paginación -->
             <div class="pagination">
                 <ul class="pagination">
                     <?php if ($currentPage > 1) { ?>
@@ -255,32 +201,26 @@ $stmtMesas->execute();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-        // Función para mostrar el SweetAlert de confirmación antes de eliminar
-        function confirmarEliminacion(roomId) {
+        // Función para limpiar los filtros y recargar la página
+        function limpiarFiltros() {
+            window.location.href = window.location.pathname; // Recargar la página sin parámetros
+        }
+        // Función para confirmar eliminación con SweetAlert
+        function confirmarEliminacion(id) {
             Swal.fire({
                 title: '¿Estás seguro?',
-                text: "¡Esta acción no se puede deshacer!",
+                text: "Esta acción no se puede deshacer",
                 icon: 'warning',
                 showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
                 confirmButtonText: 'Sí, eliminar',
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Si el usuario confirma, enviamos el formulario de eliminación
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = 'eliminarSala.php'; // Acción para el archivo de eliminación
-
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'room_id';
-                    input.value = roomId;
-
-                    form.appendChild(input);
-                    document.body.appendChild(form);
-                    form.submit();  // Enviar el formulario para eliminar la sala
+                    // Redirigir al script de eliminación con el id como parámetro
+                    window.location.href = `eliminarSala.php?id=${id}`;
                 }
             });
         }

@@ -93,7 +93,7 @@ include '../../salones/template.php'; // Incluimos la plantilla
         file_put_contents($newPagePath, $pageContent);
 
         // Redirigir a una página de éxito
-        header("Location: crudSalas.php?success=1");
+        header("Location: crudSalas.php");
         exit();
     } catch (Exception $e) {
         echo "<script>alert('Error al crear la sala: " . $e->getMessage() . "');</script>";
@@ -142,11 +142,6 @@ include '../../salones/template.php'; // Incluimos la plantilla
     </div>
     <div class="container mt-5">
         <h1>Crear Nueva Sala</h1>
-
-        <!-- Mensajes de éxito -->
-        <?php if (isset($_GET['success'])) { ?>
-            <div class="alert alert-success">Sala añadida exitosamente.</div>
-        <?php } ?>
 
         <!-- Formulario para crear sala -->
         <form method="POST" enctype="multipart/form-data" onsubmit="return validarFormulario()">

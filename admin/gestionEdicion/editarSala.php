@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtUpdate = $conexion->prepare($sqlUpdate);
 
             if ($stmtUpdate->execute($params)) {
-                header('Location: ./crudSalas.php?success=1');
+                header('Location: ./crudSalas.php');
                 exit();
             } else {
                 $error = "Error al actualizar la sala.";

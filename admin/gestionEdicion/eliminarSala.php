@@ -14,8 +14,8 @@ if (!isset($conexion)) {
     die("Error: La conexión a la base de datos no se estableció correctamente.");
 }
 
-if (isset($_POST['room_id']) && is_numeric($_POST['room_id'])) {
-    $room_id = $_POST['room_id'];
+if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+    $room_id = $_GET['id'];
 
     try {
         // Iniciar transacción
@@ -53,8 +53,7 @@ if (isset($_POST['room_id']) && is_numeric($_POST['room_id'])) {
         exit();
     }
 } else {
-    // Si no se ha enviado un room_id válido, redirigir con error
+    // Si no se ha enviado un room_id válido
     header('Location: crudSalas.php?error=ID inválido');
     exit();
 }
-?>

@@ -19,6 +19,12 @@ $recordsPerPage = isset($_POST['recordsPerPage']) ? intval($_POST['recordsPerPag
 $_SESSION['recordsPerPage'] = $recordsPerPage; // Guardar en sesión
 $currentPage = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;  // Verifica que la página sea un número mayor a 1
 
+// Procesar el botón de limpiar filtros
+if (isset($_POST['clear_filters'])) {
+    $_POST['sala'] = '';
+    $_POST['estado'] = '';
+}
+
 // Consultar salas
 $sqlSalas = "SELECT room_id, name_rooms FROM tbl_rooms";
 $stmtSalas = $conexion->query($sqlSalas);
@@ -128,32 +134,10 @@ $stmtMesas->execute();
             color: white;
             border: 2px solid #8A5021;
         }
-        /* Estilo para el selector de registros por página */
-        .form-inline select, .form-inline input[type="number"] {
-            background-color: #a67c52;
-            color: white;
-            border: 2px solid #8A5021;
-        }
-        .form-inline select:hover, .form-inline input[type="number"]:hover {
-            background-color: #8A5021;
-            border-color: #6c3e18;
-        }
-
-        /* Estilo para el botón eliminar */
-        .btn-danger {
-            background-color: #d33;
-            border-color: #d33;
-        }
-        .btn-danger:hover {
-            background-color: #a02a2a;
-            border-color: #a02a2a;
-        }
-
         /* Cambiar color del texto del placeholder a blanco */
         input::placeholder, select::placeholder {
             color: white;
         }
-
     </style>
 </head>
 <body>
@@ -162,7 +146,7 @@ $stmtMesas->execute();
         <a href="../principalAdmin.php" class="btn btn-primary">Volver</a>
     </div>
     <div class="container">
-        <!-- Botones para agregar mesa, sala y editar sala -->
+        <!-- Botones para agregar mesa -->
         <div class="d-flex justify-content-between mb-4">
             <a href="agregarMesa.php" class="btn btn-primary">
                 <i class="fas fa-plus-circle"></i> Agregar Mesa
@@ -176,7 +160,6 @@ $stmtMesas->execute();
             <div class="alert alert-danger"><?= nl2br(htmlspecialchars($_GET['errors'])); ?></div>
         <?php } ?>
 
-        <!-- Filtro de Mesas -->
         <div class="mt-4">
             <h3>Filtrar Mesas</h3>
             <form class="form-inline" method="POST">
@@ -196,6 +179,7 @@ $stmtMesas->execute();
                     <option value="occupied" <?= isset($_POST['estado']) && $_POST['estado'] == 'occupied' ? 'selected' : ''; ?>>Ocupada</option>
                 </select>
                 <button type="submit" class="btn btn-warning">Filtrar</button>
+                <button type="submit" class="btn btn-primary" name="clear_filters" value="1"><i class="fas fa-trash"></i></button>
             </form>
         </div>
 
@@ -276,39 +260,13 @@ $stmtMesas->execute();
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    // Función para mostrar el SweetAlert2 de confirmación antes de eliminar la mesa
-    function confirmarEliminacion(tableId) {
-        Swal.fire({
-            title: '¿Estás seguro?',
-            text: "¡Esta acción eliminará esta mesa de forma permanente!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Si el usuario confirma, enviamos el formulario
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = 'eliminarMesa.php';
-
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'table_id';
-                input.value = tableId;
-
-                form.appendChild(input);
-                document.body.appendChild(form);
-                form.submit();
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function confirmarEliminacion(id) {
+            if (confirm("¿Está seguro de que desea eliminar esta mesa?")) {
+                document.querySelector(`form[action='eliminarMesa.php'] input[value='${id}']`).form.submit();
             }
-        });
-    }
-</script>
-
+        }
+    </script>
 </body>
 </html>
